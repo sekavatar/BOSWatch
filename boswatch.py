@@ -31,6 +31,42 @@ from includes import checkSubprocesses  # check startup of the subprocesses
 from includes.helper import configHandler
 from includes.helper import freqConverter
 
+
+def init_logging():
+    #
+    # Create new myLogger...
+    #
+    try:
+        myLogger = logging.getLogger()
+        myLogger.setLevel(logging.DEBUG)
+        # set log string format
+        #formatter = logging.Formatter('%(asctime)s - %(module)-15s %(funcName)-15s [%(levelname)-8s] %(message)s', '%d.%m.%Y %H:%M:%S')
+        formatter = logging.Formatter('%(asctime)s - %(module)-15s [%(levelname)-8s] %(message)s', '%d.%m.%Y %H:%M:%S')
+        # create a file logger
+        fh = MyTimedRotatingFileHandler.MyTimedRotatingFileHandler(globalVars.log_path+"boswatch.log", "midnight", interval=1, backupCount=999)
+        # Starts with log level >= Debug
+        # will be changed with config.ini-param later
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(formatter)
+        myLogger.addHandler(fh)
+        # create a display logger
+        ch = logging.StreamHandler()
+        # log level for display: Default: info
+        if args.verbose:
+            ch.setLevel(logging.DEBUG)
+        elif args.quiet:
+            ch.setLevel(logging.CRITICAL)
+        else:
+            ch.setLevel(logging.INFO)
+        ch.setFormatter(formatter)
+        myLogger.addHandler(ch)
+
+    except:
+        # we couldn't work without logging -> exit
+        print "ERROR: cannot create logger"
+        exit(1)
+
+
 #
 # Check for exisiting config/config.ini-file
 #
@@ -88,39 +124,7 @@ try:
     if not os.path.exists(globalVars.log_path):
         os.mkdir(globalVars.log_path)
 
-
-    #
-    # Create new myLogger...
-    #
-    try:
-        myLogger = logging.getLogger()
-        myLogger.setLevel(logging.DEBUG)
-        # set log string format
-        #formatter = logging.Formatter('%(asctime)s - %(module)-15s %(funcName)-15s [%(levelname)-8s] %(message)s', '%d.%m.%Y %H:%M:%S')
-        formatter = logging.Formatter('%(asctime)s - %(module)-15s [%(levelname)-8s] %(message)s', '%d.%m.%Y %H:%M:%S')
-        # create a file logger
-        fh = MyTimedRotatingFileHandler.MyTimedRotatingFileHandler(globalVars.log_path+"boswatch.log", "midnight", interval=1, backupCount=999)
-        # Starts with log level >= Debug
-        # will be changed with config.ini-param later
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(formatter)
-        myLogger.addHandler(fh)
-        # create a display logger
-        ch = logging.StreamHandler()
-        # log level for display: Default: info
-        if args.verbose:
-            ch.setLevel(logging.DEBUG)
-        elif args.quiet:
-            ch.setLevel(logging.CRITICAL)
-        else:
-            ch.setLevel(logging.INFO)
-        ch.setFormatter(formatter)
-        myLogger.addHandler(ch)
-
-    except:
-        # we couldn't work without logging -> exit
-        print "ERROR: cannot create logger"
-        exit(1)
+    init_logging()
 
     # initialization of the logging was fine, continue...
     try:
