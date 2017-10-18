@@ -69,29 +69,25 @@ try:
     multimon_ng = None
     nmaHandler = None
 
-    try:
-        #
-        # Script-pathes
-        #
-        globalVars.script_path = os.path.dirname(os.path.abspath(__file__))
+    #
+    # Script-pathes
+    #
+    globalVars.script_path = os.path.dirname(os.path.abspath(__file__))
 
-        #
-        # Set log_path
-        #
-        if args.usevarlog:
-            globalVars.log_path = "/var/log/BOSWatch/"
-        else:
-            globalVars.log_path = globalVars.script_path+"/log/"
+    #
+    # Set log_path
+    #
+    if args.usevarlog:
+        globalVars.log_path = "/var/log/BOSWatch/"
+    else:
+        globalVars.log_path = globalVars.script_path+"/log/"
 
-        #
-        # If necessary create log-path
-        #
-        if not os.path.exists(globalVars.log_path):
-            os.mkdir(globalVars.log_path)
-    except:
-        # we couldn't work without logging -> exit
-        print "ERROR: cannot initialize paths"
-        exit(1)
+    #
+    # If necessary create log-path
+    #
+    if not os.path.exists(globalVars.log_path):
+        os.mkdir(globalVars.log_path)
+
 
     #
     # Create new myLogger...
