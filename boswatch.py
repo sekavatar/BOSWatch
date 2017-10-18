@@ -65,17 +65,15 @@ def init_logging():
     # initialization of the logging was fine, continue...
 
     try:
-        #
-        # Clear the logfiles
-        #
+        # Clear the log files
         fh.doRollover()
-        open(globalVars.log_path+"rtl_fm.log", "w").close()
-        open(globalVars.log_path+"multimon.log", "w").close()
-        open(globalVars.log_path+"mm_raw.txt", "w").close
+        open(globalVars.log_path + "rtl_fm.log", "w").close()
+        open(globalVars.log_path + "multimon.log", "w").close()
+        open(globalVars.log_path + "mm_raw.txt", "w").close()
         logging.debug("BOSWatch has started")
-        logging.debug("Logfiles cleared")
+        logging.debug("Log files cleared")
 
-    except:
+    except IOError:
         # It's an error, but we could work without that stuff...
         logging.error("cannot clear Logfiles")
         logging.debug("cannot clear Logfiles", exc_info=True)
