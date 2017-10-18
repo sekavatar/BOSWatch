@@ -43,8 +43,7 @@ if not os.path.exists(os.path.dirname(os.path.abspath(__file__))+"/config/config
 # Have to be before main program
 #
 # With -h or --help you get the Args help
-parser = argparse.ArgumentParser(prog="boswatch.py",
-                                description="BOSWatch is a Python Script to recive and decode german BOS information with rtl_fm and multimon-NG",
+parser = argparse.ArgumentParser(description="BOSWatch is a Python Script to recive and decode german BOS information with rtl_fm and multimon-NG",
                                 epilog="More options you can find in the extern config.ini file in the folder /config")
 # parser.add_argument("-c", "--channel", help="BOS Channel you want to listen")
 parser.add_argument("-f", "--freq", help="Frequency you want to listen to", required=True)
