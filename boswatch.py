@@ -145,21 +145,22 @@ try:
     #
     # For debug display/log args
     #
+
+    logging.debug("SW Version:	%s", globalVars.versionNr)
+    logging.debug("Branch:		%s", globalVars.branch)
+    logging.debug("Build Date:	%s", globalVars.buildDate)
+    logging.debug("Python Vers:	%s", sys.version)
+    logging.debug("BOSWatch given arguments")
+    if args.test:
+        logging.debug(" - Test-Mode!")
+
+    logging.debug(" - Frequency: %s", freqConverter.freqToHz(args.freq))
+    logging.debug(" - Device: %s", args.device)
+    logging.debug(" - PPM Error: %s", args.error)
+    logging.debug(" - Squelch: %s", args.squelch)
+    logging.debug(" - Gain: %s", args.gain)
+
     try:
-        logging.debug("SW Version:	%s", globalVars.versionNr)
-        logging.debug("Branch:		%s", globalVars.branch)
-        logging.debug("Build Date:	%s", globalVars.buildDate)
-        logging.debug("Python Vers:	%s", sys.version)
-        logging.debug("BOSWatch given arguments")
-        if args.test:
-            logging.debug(" - Test-Mode!")
-
-        logging.debug(" - Frequency: %s", freqConverter.freqToHz(args.freq))
-        logging.debug(" - Device: %s", args.device)
-        logging.debug(" - PPM Error: %s", args.error)
-        logging.debug(" - Squelch: %s", args.squelch)
-        logging.debug(" - Gain: %s", args.gain)
-
         demodulation = ""
         if "FMS" in args.demod:
             demodulation += "-a FMSFSK "
