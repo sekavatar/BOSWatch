@@ -37,35 +37,30 @@ def init_logging():
     # Create new bw_logger...
     #
     global args
-    try:
-        bw_logger = logging.getLogger()
-        bw_logger.setLevel(logging.DEBUG)
-        # set log string format
-        formatter = logging.Formatter('%(asctime)s - %(module)-15s [%(levelname)-8s] %(message)s', '%d.%m.%Y %H:%M:%S')
-        # create a file logger
-        fh = MyTimedRotatingFileHandler.MyTimedRotatingFileHandler(globalVars.log_path+"boswatch.log", "midnight",
-                                                                   interval=1, backupCount=999)
-        # Starts with log level >= Debug
-        # will be changed with config.ini-param later
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(formatter)
-        bw_logger.addHandler(fh)
-        # create a display logger
-        ch = logging.StreamHandler()
-        # log level for display: Default: info
-        if args.verbose:
-            ch.setLevel(logging.DEBUG)
-        elif args.quiet:
-            ch.setLevel(logging.CRITICAL)
-        else:
-            ch.setLevel(logging.INFO)
-        ch.setFormatter(formatter)
-        bw_logger.addHandler(ch)
-
-    except:
-        # we couldn't work without logging -> exit
-        print "ERROR: cannot create logger"
-        exit(1)
+    
+    bw_logger = logging.getLogger()
+    bw_logger.setLevel(logging.DEBUG)
+    # set log string format
+    formatter = logging.Formatter('%(asctime)s - %(module)-15s [%(levelname)-8s] %(message)s', '%d.%m.%Y %H:%M:%S')
+    # create a file logger
+    fh = MyTimedRotatingFileHandler.MyTimedRotatingFileHandler(globalVars.log_path+"boswatch.log", "midnight",
+                                                               interval=1, backupCount=999)
+    # Starts with log level >= Debug
+    # will be changed with config.ini-param later
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    bw_logger.addHandler(fh)
+    # create a display logger
+    ch = logging.StreamHandler()
+    # log level for display: Default: info
+    if args.verbose:
+        ch.setLevel(logging.DEBUG)
+    elif args.quiet:
+        ch.setLevel(logging.CRITICAL)
+    else:
+        ch.setLevel(logging.INFO)
+    ch.setFormatter(formatter)
+    bw_logger.addHandler(ch)
 
     # initialization of the logging was fine, continue...
 
