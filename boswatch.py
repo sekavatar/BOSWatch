@@ -37,7 +37,7 @@ def init_logging():
     # Create new bw_logger...
     #
     global args
-    
+
     bw_logger = logging.getLogger()
     bw_logger.setLevel(logging.DEBUG)
     # set log string format
@@ -69,15 +69,9 @@ def init_logging():
         # Clear the logfiles
         #
         fh.doRollover()
-        rtl_log = open(globalVars.log_path+"rtl_fm.log", "w")
-        mon_log = open(globalVars.log_path+"multimon.log", "w")
-        rawMmOut = open(globalVars.log_path+"mm_raw.txt", "w")
-        rtl_log.write("")
-        mon_log.write("")
-        rawMmOut.write("")
-        rtl_log.close()
-        mon_log.close()
-        rawMmOut.close()
+        open(globalVars.log_path+"rtl_fm.log", "w").close()
+        open(globalVars.log_path+"multimon.log", "w").close()
+        open(globalVars.log_path+"mm_raw.txt", "w").close
         logging.debug("BOSWatch has started")
         logging.debug("Logfiles cleared")
 
