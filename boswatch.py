@@ -36,6 +36,7 @@ def init_logging():
     #
     # Create new myLogger...
     #
+    global args
     try:
         myLogger = logging.getLogger()
         myLogger.setLevel(logging.DEBUG)
@@ -65,6 +66,30 @@ def init_logging():
         # we couldn't work without logging -> exit
         print "ERROR: cannot create logger"
         exit(1)
+
+    # initialization of the logging was fine, continue...
+
+    try:
+        #
+        # Clear the logfiles
+        #
+        fh.doRollover()
+        rtl_log = open(globalVars.log_path+"rtl_fm.log", "w")
+        mon_log = open(globalVars.log_path+"multimon.log", "w")
+        rawMmOut = open(globalVars.log_path+"mm_raw.txt", "w")
+        rtl_log.write("")
+        mon_log.write("")
+        rawMmOut.write("")
+        rtl_log.close()
+        mon_log.close()
+        rawMmOut.close()
+        logging.debug("BOSWatch has started")
+        logging.debug("Logfiles cleared")
+
+    except:
+        # It's an error, but we could work without that stuff...
+        logging.error("cannot clear Logfiles")
+        logging.debug("cannot clear Logfiles", exc_info=True)
 
 
 #
@@ -125,29 +150,6 @@ try:
         os.mkdir(globalVars.log_path)
 
     init_logging()
-
-    # initialization of the logging was fine, continue...
-    try:
-        #
-        # Clear the logfiles
-        #
-        fh.doRollover()
-        rtl_log = open(globalVars.log_path+"rtl_fm.log", "w")
-        mon_log = open(globalVars.log_path+"multimon.log", "w")
-        rawMmOut = open(globalVars.log_path+"mm_raw.txt", "w")
-        rtl_log.write("")
-        mon_log.write("")
-        rawMmOut.write("")
-        rtl_log.close()
-        mon_log.close()
-        rawMmOut.close()
-        logging.debug("BOSWatch has started")
-        logging.debug("Logfiles cleared")
-
-    except:
-        # It's an error, but we could work without that stuff...
-        logging.error("cannot clear Logfiles")
-        logging.debug("cannot clear Logfiles", exc_info=True)
 
     #
     # For debug display/log args
