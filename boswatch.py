@@ -67,7 +67,7 @@ def init_logging():
     try:
         # Clear the log files
         fh.doRollover()
-        open(os.path.join(globalVars.log_pat, "rtl_fm.log"), "w").close()
+        open(os.path.join(globalVars.log_path, "rtl_fm.log"), "w").close()
         open(os.path.join(globalVars.log_path, "multimon.log"), "w").close()
         open(os.path.join(globalVars.log_path, "mm_raw.txt"), "w").close()
         logging.debug("BOSWatch has started")
