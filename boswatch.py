@@ -421,5 +421,3 @@ finally:
         logging.shutdown()
         if nmaHandler:
             nmaHandler.close()
-        fh.close()
-        ch.close()
