@@ -142,9 +142,7 @@ try:
 
     init_logging()
 
-    #
     # For debug display/log args
-    #
 
     logging.debug("SW Version:	%s", globalVars.versionNr)
     logging.debug("Branch:		%s", globalVars.branch)
@@ -326,7 +324,7 @@ try:
             command = ""
             if globalVars.config.has_option("BOSWatch", "multimon_path"):
                 command = globalVars.config.get("BOSWatch", "multimon_path")
-            command = command+"multimon-ng "+str(demodulation)+ " -f alpha -t raw /dev/stdin - "
+            command += "multimon-ng " + str(demodulation) + " -f alpha -t raw /dev/stdin - "
             multimon_ng = subprocess.Popen(command.split(),
                 stdin=rtl_fm.stdout,
                 stdout=subprocess.PIPE,
