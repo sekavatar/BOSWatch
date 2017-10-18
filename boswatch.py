@@ -34,12 +34,12 @@ from includes.helper import freqConverter
 
 def init_logging():
     #
-    # Create new myLogger...
+    # Create new bw_logger...
     #
     global args
     try:
-        myLogger = logging.getLogger()
-        myLogger.setLevel(logging.DEBUG)
+        bw_logger = logging.getLogger()
+        bw_logger.setLevel(logging.DEBUG)
         # set log string format
         #formatter = logging.Formatter('%(asctime)s - %(module)-15s %(funcName)-15s [%(levelname)-8s] %(message)s', '%d.%m.%Y %H:%M:%S')
         formatter = logging.Formatter('%(asctime)s - %(module)-15s [%(levelname)-8s] %(message)s', '%d.%m.%Y %H:%M:%S')
@@ -49,7 +49,7 @@ def init_logging():
         # will be changed with config.ini-param later
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(formatter)
-        myLogger.addHandler(fh)
+        bw_logger.addHandler(fh)
         # create a display logger
         ch = logging.StreamHandler()
         # log level for display: Default: info
@@ -60,7 +60,7 @@ def init_logging():
         else:
             ch.setLevel(logging.INFO)
         ch.setFormatter(formatter)
-        myLogger.addHandler(ch)
+        bw_logger.addHandler(ch)
 
     except:
         # we couldn't work without logging -> exit
