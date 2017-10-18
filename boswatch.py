@@ -158,40 +158,33 @@ try:
     logging.debug(" - Squelch: %s", args.squelch)
     logging.debug(" - Gain: %s", args.gain)
 
-    try:
-        demodulation = ""
-        if "FMS" in args.demod:
-            demodulation += "-a FMSFSK "
-            logging.debug(" - Demod: FMS")
-        if "ZVEI" in args.demod:
-            demodulation += "-a ZVEI1 "
-            logging.debug(" - Demod: ZVEI")
-        if "POC512" in args.demod:
-            demodulation += "-a POCSAG512 "
-            logging.debug(" - Demod: POC512")
-        if "POC1200" in args.demod:
-            demodulation += "-a POCSAG1200 "
-            logging.debug(" - Demod: POC1200")
-        if "POC2400" in args.demod:
-            demodulation += "-a POCSAG2400 "
-            logging.debug(" - Demod: POC2400")
+    demodulation = ""
+    if "FMS" in args.demod:
+        demodulation += "-a FMSFSK "
+        logging.debug(" - Demod: FMS")
+    if "ZVEI" in args.demod:
+        demodulation += "-a ZVEI1 "
+        logging.debug(" - Demod: ZVEI")
+    if "POC512" in args.demod:
+        demodulation += "-a POCSAG512 "
+        logging.debug(" - Demod: POC512")
+    if "POC1200" in args.demod:
+        demodulation += "-a POCSAG1200 "
+        logging.debug(" - Demod: POC1200")
+    if "POC2400" in args.demod:
+        demodulation += "-a POCSAG2400 "
+        logging.debug(" - Demod: POC2400")
 
-        logging.debug(" - Use /var/log: %s", args.usevarlog)
-        logging.debug(" - Verbose Mode: %s", args.verbose)
-        logging.debug(" - Quiet Mode: %s", args.quiet)
+    logging.debug(" - Use /var/log: %s", args.usevarlog)
+    logging.debug(" - Verbose Mode: %s", args.verbose)
+    logging.debug(" - Quiet Mode: %s", args.quiet)
 
-        if not args.quiet:  # only if not quiet mode
-            from includes import shellHeader
-            shellHeader.printHeader(args)
+    if not args.quiet:  # only if not quiet mode
+        from includes import shellHeader
+        shellHeader.printHeader(args)
 
-        if args.test:
-            logging.warning("!!! We are in Test-Mode !!!")
-
-    except:
-        # we couldn't work without config -> exit
-        logging.critical("cannot display/log args")
-        logging.debug("cannot display/log args", exc_info=True)
-        exit(1)
+    if args.test:
+        logging.warning("!!! We are in Test-Mode !!!")
 
     #
     # Read config.ini
