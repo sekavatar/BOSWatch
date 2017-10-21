@@ -86,30 +86,32 @@ if not os.path.exists(os.path.dirname(os.path.abspath(__file__))+"/config/config
     print "ERROR: No config.ini found"
     exit(1)
 
+
 #
 # ArgParser
 # Have to be before main program
 #
-# With -h or --help you get the Args help
-parser = argparse.ArgumentParser(
-    description="BOSWatch is a Python Script to recive and decode german BOS information with rtl_fm and multimon-NG",
-    epilog="More options you can find in the extern config.ini file in the folder /config")
-# parser.add_argument("-c", "--channel", help="BOS Channel you want to listen")
-parser.add_argument("-f", "--freq", help="Frequency you want to listen to", required=True)
-parser.add_argument("-d", "--device", help="Device you want to use (check with rtl_test)", type=int, default=0)
-parser.add_argument("-e", "--error", help="Frequency-error of your device in PPM", default=0)
-parser.add_argument("-a", "--demod", help="Demodulation functions",
-                    choices=['FMS', 'ZVEI', 'POC512', 'POC1200', 'POC2400'], required=True, nargs="+")
-parser.add_argument("-s", "--squelch", help="Level of squelch", type=int, default=0)
-parser.add_argument("-g", "--gain", help="Level of gain", type=int, default=100)
-parser.add_argument("-u", "--usevarlog",
-                    help="Use '/var/log/boswatch' for logfiles instead of subdir 'log' in BOSWatch directory",
-                    action="store_true")
-parser.add_argument("-v", "--verbose", help="Show more information", action="store_true")
-parser.add_argument("-q", "--quiet", help="Show no information. Only logfiles", action="store_true")
-# We need this argument for testing (skip instantiate of rtl-fm and multimon-ng):
-parser.add_argument("-t", "--test", help=argparse.SUPPRESS, action="store_true")
-args = parser.parse_args()
+def get_arguments():
+    # With -h or --help you get the Args help
+    parser = argparse.ArgumentParser(
+        description="BOSWatch is a Python Script to recive and decode german BOS information with rtl_fm and multimon-NG",
+        epilog="More options you can find in the extern config.ini file in the folder /config")
+    # parser.add_argument("-c", "--channel", help="BOS Channel you want to listen")
+    parser.add_argument("-f", "--freq", help="Frequency you want to listen to", required=True)
+    parser.add_argument("-d", "--device", help="Device you want to use (check with rtl_test)", type=int, default=0)
+    parser.add_argument("-e", "--error", help="Frequency-error of your device in PPM", default=0)
+    parser.add_argument("-a", "--demod", help="Demodulation functions",
+                        choices=['FMS', 'ZVEI', 'POC512', 'POC1200', 'POC2400'], required=True, nargs="+")
+    parser.add_argument("-s", "--squelch", help="Level of squelch", type=int, default=0)
+    parser.add_argument("-g", "--gain", help="Level of gain", type=int, default=100)
+    parser.add_argument("-u", "--usevarlog",
+                        help="Use '/var/log/boswatch' for logfiles instead of subdir 'log' in BOSWatch directory",
+                        action="store_true")
+    parser.add_argument("-v", "--verbose", help="Show more information", action="store_true")
+    parser.add_argument("-q", "--quiet", help="Show no information. Only logfiles", action="store_true")
+    # We need this argument for testing (skip instantiate of rtl-fm and multimon-ng):
+    parser.add_argument("-t", "--test", help=argparse.SUPPRESS, action="store_true")
+    return parser.parse_args()
 
 
 #
@@ -120,6 +122,7 @@ try:
     rtl_fm = None
     multimon_ng = None
     nmaHandler = None
+    args = get_arguments()
 
     #
     # Script-pathes
