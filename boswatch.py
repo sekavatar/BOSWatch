@@ -95,6 +95,10 @@ def init_logging(args):
     logging.debug(" - Gain: %s", args.gain)
 
 
+def check_dependencies():
+    return None, None, None
+
+
 def parse_config():
     #
     # Read config.ini
@@ -158,13 +162,12 @@ def get_arguments():
 # Main program
 #
 def main():
-    try:
-        # initialization:
-        rtl_fm = None
-        multimon_ng = None
-        nmaHandler = None
-        args = get_arguments()
+    rtl_fm = None
+    multimon_ng = None
+    nmaHandler = None
+    args = get_arguments()
 
+    try:
         #
         # Script-pathes
         #
@@ -186,6 +189,7 @@ def main():
 
         parse_config()
         init_logging(args)
+        rtl_fm, multimon_ng, nmaHandler = check_dependencies()
 
         demodulation = ""
         if "FMS" in args.demod:
@@ -219,7 +223,7 @@ def main():
         #
         # Add NMA logging handler
         #
-        try:
+        if nmaHandler is not None:
             if configHandler.checkConfig("NMAHandler"):
                 # is NMAHandler enabled?
                 if globalVars.config.getboolean("NMAHandler", "enableHandler") == True:
@@ -233,7 +237,7 @@ def main():
                             nmaHandler = NMAHandler.NMAHandler(globalVars.config.get("NMAHandler","APIKey"), globalVars.config.get("NMAHandler","appName"))
                         nmaHandler.setLevel(globalVars.config.getint("NMAHandler","loglevel"))
                         myLogger.addHandler(nmaHandler)
-        except:
+        else:
             # It's an error, but we could work without that stuff...
             logging.error("cannot add NMA logging handler")
             logging.debug("cannot add NMA logging handler", exc_info=True)
@@ -279,7 +283,7 @@ def main():
         #
         # Start rtl_fm
         #
-        try:
+        if rtl_fm is not None:
             if not args.test:
                 logging.debug("starting rtl_fm")
                 command = ""
@@ -297,7 +301,7 @@ def main():
                 checkSubprocesses.checkRTL()
             else:
                 logging.warning("!!! Test-Mode: rtl_fm not started !!!")
-        except:
+        else:
             # we couldn't work without rtl_fm -> exit
             logging.critical("cannot start rtl_fm")
             logging.debug("cannot start rtl_fm", exc_info=True)
@@ -306,7 +310,7 @@ def main():
         #
         # Start multimon
         #
-        try:
+        if multimon_ng is not None:
             if not args.test:
                 logging.debug("starting multimon-ng")
                 command = ""
@@ -324,7 +328,7 @@ def main():
                 checkSubprocesses.checkMultimon()
             else:
                 logging.warning("!!! Test-Mode: multimon-ng not started !!!")
-        except:
+        else:
             # we couldn't work without multimon-ng -> exit
             logging.critical("cannot start multimon-ng")
             logging.debug("cannot start multimon-ng", exc_info=True)
