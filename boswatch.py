@@ -250,38 +250,41 @@ def main():
         #
         # Load plugins
         #
-        try:
-            from includes import pluginLoader
-            pluginLoader.loadPlugins()
-        except:
-            # we couldn't work without plugins -> exit
-            logging.critical("cannot load Plugins")
-            logging.debug("cannot load Plugins", exc_info=True)
-            exit(1)
+        # TODO: re-enable plugin loading
+        #try:
+        #    from includes import pluginLoader
+        #    pluginLoader.loadPlugins()
+        #except:
+        #    # we couldn't work without plugins -> exit
+        #    logging.critical("cannot load Plugins")
+        #    logging.debug("cannot load Plugins", exc_info=True)
+        #    exit(1)
 
         #
         # Load filters
         #
-        try:
-            if globalVars.config.getboolean("BOSWatch", "useRegExFilter"):
-                from includes import regexFilter
-                regexFilter.loadFilters()
-        except:
-            # It's an error, but we could work without that stuff...
-            logging.error("cannot load filters")
-            logging.debug("cannot load filters", exc_info=True)
+        # TODO: re-enable filter loading
+        #try:
+        #    if globalVars.config.getboolean("BOSWatch", "useRegExFilter"):
+        #        from includes import regexFilter
+        #        regexFilter.loadFilters()
+        #except:
+        #    # It's an error, but we could work without that stuff...
+        #    logging.error("cannot load filters")
+        #    logging.debug("cannot load filters", exc_info=True)
 
         #
+        # TODO: re-enable description list loading
         # Load description lists
         #
-        try:
-            if globalVars.config.getboolean("FMS", "idDescribed") or globalVars.config.getboolean("ZVEI", "idDescribed") or globalVars.config.getboolean("POC", "idDescribed"):
-                from includes import descriptionList
-                descriptionList.loadDescriptionLists()
-        except:
-            # It's an error, but we could work without that stuff...
-            logging.error("cannot load description lists")
-            logging.debug("cannot load description lists", exc_info=True)
+        #try:
+        #    if globalVars.config.getboolean("FMS", "idDescribed") or globalVars.config.getboolean("ZVEI", "idDescribed") or globalVars.config.getboolean("POC", "idDescribed"):
+        #        from includes import descriptionList
+        #        descriptionList.loadDescriptionLists()
+        #except:
+        #    # It's an error, but we could work without that stuff...
+        #    logging.error("cannot load description lists")
+        #    logging.debug("cannot load description lists", exc_info=True)
 
         #
         # Start rtl_fm
@@ -397,7 +400,7 @@ def main():
             # Close Logging
             logging.debug("close Logging")
             # Waiting for all Threads to write there logs
-            if globalVars.config.getboolean("BOSWatch","processAlarmAsync") == True:
+            if config.getboolean("BOSWatch", "processAlarmAsync"):
                 logging.debug("waiting 3s for threads...")
                 time.sleep(3)
             logging.info("BOSWatch exit()")
