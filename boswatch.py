@@ -32,11 +32,10 @@ from includes.helper import configHandler
 from includes.helper import freqConverter
 
 
-def init_logging():
+def init_logging(args):
     #
     # Create new bw_logger...
     #
-    global args
 
     bw_logger = logging.getLogger()
     bw_logger.setLevel(logging.DEBUG)
@@ -77,6 +76,22 @@ def init_logging():
         # It's an error, but we could work without that stuff...
         logging.error("cannot clear Logfiles")
         logging.debug("cannot clear Logfiles", exc_info=True)
+
+    # For debug display/log args
+
+    logging.debug("SW Version:	%s", globalVars.versionNr)
+    logging.debug("Branch:		%s", globalVars.branch)
+    logging.debug("Build Date:	%s", globalVars.buildDate)
+    logging.debug("Python Vers:	%s", sys.version)
+    logging.debug("BOSWatch given arguments")
+    if args.test:
+        logging.debug(" - Test-Mode!")
+
+    logging.debug(" - Frequency: %s", freqConverter.freqToHz(args.freq))
+    logging.debug(" - Device: %s", args.device)
+    logging.debug(" - PPM Error: %s", args.error)
+    logging.debug(" - Squelch: %s", args.squelch)
+    logging.debug(" - Gain: %s", args.gain)
 
 
 #
@@ -143,23 +158,9 @@ try:
     if not os.path.exists(globalVars.log_path):
         os.mkdir(globalVars.log_path)
 
-    init_logging()
+    init_logging(args)
 
-    # For debug display/log args
 
-    logging.debug("SW Version:	%s", globalVars.versionNr)
-    logging.debug("Branch:		%s", globalVars.branch)
-    logging.debug("Build Date:	%s", globalVars.buildDate)
-    logging.debug("Python Vers:	%s", sys.version)
-    logging.debug("BOSWatch given arguments")
-    if args.test:
-        logging.debug(" - Test-Mode!")
-
-    logging.debug(" - Frequency: %s", freqConverter.freqToHz(args.freq))
-    logging.debug(" - Device: %s", args.device)
-    logging.debug(" - PPM Error: %s", args.error)
-    logging.debug(" - Squelch: %s", args.squelch)
-    logging.debug(" - Gain: %s", args.gain)
 
     demodulation = ""
     if "FMS" in args.demod:
