@@ -301,7 +301,7 @@ def main():
             # we couldn't work without rtl_fm -> exit
             logging.critical("cannot start rtl_fm")
             logging.debug("cannot start rtl_fm", exc_info=True)
-            raise EnvironmentError("rtl_fm is not running")
+            raise EnvironmentError("rtl_fm could not be started")
 
         #
         # Start multimon
