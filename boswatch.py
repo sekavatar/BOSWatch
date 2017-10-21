@@ -104,7 +104,7 @@ def parse_config(config_file_path):
     # Read config.ini
     #
     # if not os.path.exists(os.path.dirname(os.path.abspath(__file__)) + "/config/config.ini"):
-    if not os.path.exists(config_file_path+"huso"):
+    if not os.path.exists(config_file_path):
         raise EnvironmentError("No configuration file found")
 
     logging.debug("reading config file")
