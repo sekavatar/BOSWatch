@@ -99,28 +99,30 @@ def check_dependencies():
     return None, None, None
 
 
-def parse_config():
+def parse_config(config_file_path):
     #
     # Read config.ini
     #
+    logging.debug("reading config file")
+    config = ConfigParser.ConfigParser()
     try:
-        logging.debug("reading config file")
-        globalVars.config = ConfigParser.ConfigParser()
-        globalVars.config.read(globalVars.script_path+"/config/config.ini")
+        config.read(config_file_path)
         # if given loglevel is debug:
-        if globalVars.config.getint("BOSWatch", "loglevel") == 10:
-            configHandler.checkConfig("BOSWatch")
-            configHandler.checkConfig("FMS")
-            configHandler.checkConfig("ZVEI")
-            configHandler.checkConfig("POC")
-            configHandler.checkConfig("Plugins")
-            configHandler.checkConfig("Filters")
+        # TODO: check config file integrity
+        # if globalVars.config.getint("BOSWatch", "loglevel") == 10:
+            # configHandler.checkConfig("BOSWatch")
+            # configHandler.checkConfig("FMS")
+            # configHandler.checkConfig("ZVEI")
+            # configHandler.checkConfig("POC")
+            # configHandler.checkConfig("Plugins")
+            # configHandler.checkConfig("Filters")
             # NMAHandler is outputed below
-    except:
-        # we couldn't work without config -> exit
-        logging.critical("cannot read config file")
+    except ConfigParser.Error as error:
+        # we cannot work without config, log and re-raise
+        logging.critical("cannot read config file %s", error)
         logging.debug("cannot read config file", exc_info=True)
-        exit(1)
+        raise
+    return config
 
 
 #
@@ -164,7 +166,7 @@ def get_arguments():
 def main():
     rtl_fm = None
     multimon_ng = None
-    nmaHandler = None
+    nma_handler = None
     args = get_arguments()
 
     try:
@@ -187,9 +189,9 @@ def main():
         if not os.path.exists(globalVars.log_path):
             os.mkdir(globalVars.log_path)
 
-        parse_config()
+        config = parse_config(os.path.join(globalVars.script_path, "config", "config.ini"))
         init_logging(args)
-        rtl_fm, multimon_ng, nmaHandler = check_dependencies()
+        rtl_fm, multimon_ng, nma_handler = check_dependencies()
 
         demodulation = ""
         if "FMS" in args.demod:
@@ -223,22 +225,23 @@ def main():
         #
         # Add NMA logging handler
         #
-        if nmaHandler is not None:
-            if configHandler.checkConfig("NMAHandler"):
+        if nma_handler is not None:
+            if config.getboolean("NMAHandler", "enableHandler"): #   configHandler.checkConfig("NMAHandler"):
                 # is NMAHandler enabled?
-                if globalVars.config.getboolean("NMAHandler", "enableHandler") == True:
+                # if globalVars.config.getboolean("NMAHandler", "enableHandler") == True:
                     # we only could do something, if an APIKey is given:
-                    if len(globalVars.config.get("NMAHandler","APIKey")) > 0:
-                        logging.debug("add NMA logging handler")
-                        from includes import NMAHandler
-                        if globalVars.config.get("NMAHandler", "appName") == "":
-                            nmaHandler = NMAHandler.NMAHandler(globalVars.config.get("NMAHandler","APIKey"))
-                        else:
-                            nmaHandler = NMAHandler.NMAHandler(globalVars.config.get("NMAHandler","APIKey"), globalVars.config.get("NMAHandler","appName"))
-                        nmaHandler.setLevel(globalVars.config.getint("NMAHandler","loglevel"))
-                        myLogger.addHandler(nmaHandler)
+                if len(config.get("NMAHandler", "APIKey")) > 0:
+                    logging.debug("adding NMA logging handler")
+                    from includes import NMAHandler # TODO: Install nmapy as python module
+                    if config.get("NMAHandler", "appName") == "":
+                        nma_handler = NMAHandler.NMAHandler(config.get("NMAHandler", "APIKey"))
+                    else:
+                        nma_handler = NMAHandler.NMAHandler(config.get("NMAHandler", "APIKey"),
+                                                           config.get("NMAHandler", "appName"))
+                    nma_handler.setLevel(config.getint("NMAHandler", "loglevel"))
+                    logging.getLogger().addHandler(nma_handler)
         else:
-            # It's an error, but we could work without that stuff...
+            # It's an error, but we can work without that stuff...
             logging.error("cannot add NMA logging handler")
             logging.debug("cannot add NMA logging handler", exc_info=True)
 
@@ -399,8 +402,8 @@ def main():
                 time.sleep(3)
             logging.info("BOSWatch exit()")
             logging.shutdown()
-            if nmaHandler:
-                nmaHandler.close()
+            if nma_handler:
+                nma_handler.close()
 
 
 if __name__ == "__main__":
