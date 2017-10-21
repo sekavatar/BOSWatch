@@ -150,7 +150,7 @@ try:
     if args.usevarlog:
         globalVars.log_path = "/var/log/BOSWatch/"
     else:
-        globalVars.log_path = globalVars.script_path+"/log/"
+        globalVars.log_path = os.path.join(globalVars.script_path, "log")
 
     #
     # If necessary create log-path
