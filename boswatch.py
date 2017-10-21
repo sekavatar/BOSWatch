@@ -26,7 +26,6 @@ import time			 # for time.sleep()
 import subprocess	 # for starting rtl_fm and multimon-ng
 
 from includes import globalVars  # Global variables
-from includes import MyTimedRotatingFileHandler  # extension of TimedRotatingFileHandler
 from includes import checkSubprocesses  # check startup of the subprocesses
 from includes.helper import configHandler
 from includes.helper import freqConverter
@@ -42,10 +41,12 @@ def init_logging(args):
     # set log string format
     formatter = logging.Formatter('%(asctime)s - %(module)-15s [%(levelname)-8s] %(message)s', '%d.%m.%Y %H:%M:%S')
     # create a file logger
-    fh = MyTimedRotatingFileHandler.MyTimedRotatingFileHandler(globalVars.log_path+"boswatch.log", "midnight",
-                                                               interval=1, backupCount=999)
+    # TODO: read backupCount from config file, so that we can remove additional class
+    fh = logging.handlers.TimedRotatingFileHandler(os.path.join(globalVars.log_path, "boswatch.log"), "midnight",
+                                                   interval=1, backupCount=9)
     # Starts with log level >= Debug
     # will be changed with config.ini-param later
+    # TODO: read log level from config file
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     bw_logger.addHandler(fh)
@@ -93,6 +94,9 @@ def init_logging(args):
     logging.debug(" - Squelch: %s", args.squelch)
     logging.debug(" - Gain: %s", args.gain)
 
+
+def parse_config():
+    pass
 
 #
 # Check for exisiting config/config.ini-file
@@ -160,8 +164,6 @@ try:
 
     init_logging(args)
 
-
-
     demodulation = ""
     if "FMS" in args.demod:
         demodulation += "-a FMSFSK "
@@ -211,19 +213,6 @@ try:
         logging.critical("cannot read config file")
         logging.debug("cannot read config file", exc_info=True)
         exit(1)
-
-    #
-    # Set the loglevel and backupCount of the file handler
-    #
-    try:
-        logging.debug("set loglevel of fileHandler to: %s", globalVars.config.getint("BOSWatch","loglevel"))
-        fh.setLevel(globalVars.config.getint("BOSWatch","loglevel"))
-        logging.debug("set backupCount of fileHandler to: %s", globalVars.config.getint("BOSWatch","backupCount"))
-        fh.setBackupCount(globalVars.config.getint("BOSWatch","backupCount"))
-    except:
-        # It's an error, but we could work without that stuff...
-        logging.error("cannot set loglevel of fileHandler")
-        logging.debug("cannot set loglevel of fileHandler", exc_info=True)
 
     #
     # Add NMA logging handler
