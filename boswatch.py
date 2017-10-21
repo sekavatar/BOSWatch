@@ -24,6 +24,7 @@ import os			 # for log mkdir
 import sys			 # for py version
 import time			 # for time.sleep()
 import subprocess	 # for starting rtl_fm and multimon-ng
+import shlex         # for command line parameter splitting
 
 from includes import globalVars  # Global variables
 from includes import checkSubprocesses  # check startup of the subprocesses
@@ -96,7 +97,7 @@ def init_logging(args):
 
 
 def check_dependencies():
-    return None, None, None
+    return "something", None, None
 
 
 def parse_config(config_file_path):
@@ -279,18 +280,19 @@ def main():
         if rtl_fm is not None:
             if not args.test:
                 logging.debug("starting rtl_fm")
-                command = ""
-                if globalVars.config.has_option("BOSWatch", "rtl_path"):
-                    command = globalVars.config.get("BOSWatch", "rtl_path")
-                command = command+"rtl_fm -d "+str(args.device)+" -f "+str(freqConverter.freqToHz(args.freq)) + \
+                command = "rtl_fm"
+                if config.has_option("BOSWatch", "rtl_path"):
+                    command = os.path.join(config.get("BOSWatch", "rtl_path"), command)
+                command += " -d " + str(args.device) + " -f " + str(freqConverter.freqToHz(args.freq)) + \
                           " -M fm -p "+str(args.error)+" -E DC -F 0 -l " + \
-                          str(args.squelch)+" -g "+str(args.gain) + " -s 22050"
-                rtl_fm = subprocess.Popen(command.split(),
+                          str(args.squelch) + " -g " + str(args.gain) + " -s 22050"
+                rtl_fm = subprocess.Popen(shlex.split(command),
                                           stdout=subprocess.PIPE,
-                                          stderr=open(globalVars.log_path+"rtl_fm.log", "a"),
+                                          stderr=open(globalVars.log_path + "rtl_fm.log", "a"),
                                           shell=False)
                 # rtl_fm doesn't self-destruct, when an error occurs
                 # wait a moment to give the subprocess a chance to write the logfile
+                # TODO: I assume we are checking for errors here?
                 time.sleep(3)
                 checkSubprocesses.checkRTL()
             else:
@@ -299,7 +301,7 @@ def main():
             # we couldn't work without rtl_fm -> exit
             logging.critical("cannot start rtl_fm")
             logging.debug("cannot start rtl_fm", exc_info=True)
-            exit(1)
+            raise EnvironmentError("rtl_fm is not running")
 
         #
         # Start multimon
