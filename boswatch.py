@@ -96,7 +96,28 @@ def init_logging(args):
 
 
 def parse_config():
-    pass
+    #
+    # Read config.ini
+    #
+    try:
+        logging.debug("reading config file")
+        globalVars.config = ConfigParser.ConfigParser()
+        globalVars.config.read(globalVars.script_path+"/config/config.ini")
+        # if given loglevel is debug:
+        if globalVars.config.getint("BOSWatch", "loglevel") == 10:
+            configHandler.checkConfig("BOSWatch")
+            configHandler.checkConfig("FMS")
+            configHandler.checkConfig("ZVEI")
+            configHandler.checkConfig("POC")
+            configHandler.checkConfig("Plugins")
+            configHandler.checkConfig("Filters")
+            # NMAHandler is outputed below
+    except:
+        # we couldn't work without config -> exit
+        logging.critical("cannot read config file")
+        logging.debug("cannot read config file", exc_info=True)
+        exit(1)
+
 
 #
 # Check for exisiting config/config.ini-file
@@ -162,6 +183,7 @@ try:
     if not os.path.exists(globalVars.log_path):
         os.mkdir(globalVars.log_path)
 
+    parse_config()
     init_logging(args)
 
     demodulation = ""
@@ -192,27 +214,6 @@ try:
     if args.test:
         logging.warning("!!! We are in Test-Mode !!!")
 
-    #
-    # Read config.ini
-    #
-    try:
-        logging.debug("reading config file")
-        globalVars.config = ConfigParser.ConfigParser()
-        globalVars.config.read(globalVars.script_path+"/config/config.ini")
-        # if given loglevel is debug:
-        if globalVars.config.getint("BOSWatch", "loglevel") == 10:
-            configHandler.checkConfig("BOSWatch")
-            configHandler.checkConfig("FMS")
-            configHandler.checkConfig("ZVEI")
-            configHandler.checkConfig("POC")
-            configHandler.checkConfig("Plugins")
-            configHandler.checkConfig("Filters")
-            # NMAHandler is outputed below
-    except:
-        # we couldn't work without config -> exit
-        logging.critical("cannot read config file")
-        logging.debug("cannot read config file", exc_info=True)
-        exit(1)
 
     #
     # Add NMA logging handler
