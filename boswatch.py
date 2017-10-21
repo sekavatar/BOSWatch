@@ -103,6 +103,10 @@ def parse_config(config_file_path):
     #
     # Read config.ini
     #
+    # if not os.path.exists(os.path.dirname(os.path.abspath(__file__)) + "/config/config.ini"):
+    if not os.path.exists(config_file_path+"huso"):
+        raise EnvironmentError("No configuration file found")
+
     logging.debug("reading config file")
     config = ConfigParser.ConfigParser()
     try:
@@ -110,27 +114,12 @@ def parse_config(config_file_path):
         # if given loglevel is debug:
         # TODO: check config file integrity
         # if globalVars.config.getint("BOSWatch", "loglevel") == 10:
-            # configHandler.checkConfig("BOSWatch")
-            # configHandler.checkConfig("FMS")
-            # configHandler.checkConfig("ZVEI")
-            # configHandler.checkConfig("POC")
-            # configHandler.checkConfig("Plugins")
-            # configHandler.checkConfig("Filters")
-            # NMAHandler is outputed below
     except ConfigParser.Error as error:
         # we cannot work without config, log and re-raise
         logging.critical("cannot read config file %s", error)
         logging.debug("cannot read config file", exc_info=True)
         raise
     return config
-
-
-#
-# Check for exisiting config/config.ini-file
-#
-if not os.path.exists(os.path.dirname(os.path.abspath(__file__))+"/config/config.ini"):
-    print "ERROR: No config.ini found"
-    exit(1)
 
 
 #
@@ -169,28 +158,29 @@ def main():
     nma_handler = None
     args = get_arguments()
 
+    #
+    # Script-pathes
+    #
+    # globalVars.script_path = os.path.dirname(os.path.abspath(__file__))
+
+    #
+    # Set log_path
+    #
+    if args.usevarlog:
+        globalVars.log_path = "/var/log/BOSWatch/"
+    else:
+        globalVars.log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "log")
+
+    #
+    # If necessary create log-path
+    #
+    if not os.path.exists(globalVars.log_path):
+        os.mkdir(globalVars.log_path)
+
+    config = parse_config(os.path.join(globalVars.script_path, "config", "config.ini"))
+
+    init_logging(args)
     try:
-        #
-        # Script-pathes
-        #
-        globalVars.script_path = os.path.dirname(os.path.abspath(__file__))
-
-        #
-        # Set log_path
-        #
-        if args.usevarlog:
-            globalVars.log_path = "/var/log/BOSWatch/"
-        else:
-            globalVars.log_path = os.path.join(globalVars.script_path, "log")
-
-        #
-        # If necessary create log-path
-        #
-        if not os.path.exists(globalVars.log_path):
-            os.mkdir(globalVars.log_path)
-
-        config = parse_config(os.path.join(globalVars.script_path, "config", "config.ini"))
-        init_logging(args)
         rtl_fm, multimon_ng, nma_handler = check_dependencies()
 
         demodulation = ""
@@ -221,23 +211,20 @@ def main():
         if args.test:
             logging.warning("!!! We are in Test-Mode !!!")
 
-
         #
         # Add NMA logging handler
         #
         if nma_handler is not None:
-            if config.getboolean("NMAHandler", "enableHandler"): #   configHandler.checkConfig("NMAHandler"):
-                # is NMAHandler enabled?
-                # if globalVars.config.getboolean("NMAHandler", "enableHandler") == True:
-                    # we only could do something, if an APIKey is given:
+            if config.getboolean("NMAHandler", "enableHandler"):
+                # We do need some API key
                 if len(config.get("NMAHandler", "APIKey")) > 0:
                     logging.debug("adding NMA logging handler")
-                    from includes import NMAHandler # TODO: Install nmapy as python module
+                    from includes import NMAHandler  # TODO: Install nmapy as python module
                     if config.get("NMAHandler", "appName") == "":
                         nma_handler = NMAHandler.NMAHandler(config.get("NMAHandler", "APIKey"))
                     else:
                         nma_handler = NMAHandler.NMAHandler(config.get("NMAHandler", "APIKey"),
-                                                           config.get("NMAHandler", "appName"))
+                                                            config.get("NMAHandler", "appName"))
                     nma_handler.setLevel(config.getint("NMAHandler", "loglevel"))
                     logging.getLogger().addHandler(nma_handler)
         else:
@@ -251,10 +238,10 @@ def main():
         # Load plugins
         #
         # TODO: re-enable plugin loading
-        #try:
+        # try:
         #    from includes import pluginLoader
         #    pluginLoader.loadPlugins()
-        #except:
+        # except:
         #    # we couldn't work without plugins -> exit
         #    logging.critical("cannot load Plugins")
         #    logging.debug("cannot load Plugins", exc_info=True)
@@ -264,11 +251,11 @@ def main():
         # Load filters
         #
         # TODO: re-enable filter loading
-        #try:
+        # try:
         #    if globalVars.config.getboolean("BOSWatch", "useRegExFilter"):
         #        from includes import regexFilter
         #        regexFilter.loadFilters()
-        #except:
+        # except:
         #    # It's an error, but we could work without that stuff...
         #    logging.error("cannot load filters")
         #    logging.debug("cannot load filters", exc_info=True)
@@ -277,11 +264,11 @@ def main():
         # TODO: re-enable description list loading
         # Load description lists
         #
-        #try:
+        # try:
         #    if globalVars.config.getboolean("FMS", "idDescribed") or globalVars.config.getboolean("ZVEI", "idDescribed") or globalVars.config.getboolean("POC", "idDescribed"):
         #        from includes import descriptionList
         #        descriptionList.loadDescriptionLists()
-        #except:
+        # except:
         #    # It's an error, but we could work without that stuff...
         #    logging.error("cannot load description lists")
         #    logging.debug("cannot load description lists", exc_info=True)
@@ -295,12 +282,13 @@ def main():
                 command = ""
                 if globalVars.config.has_option("BOSWatch", "rtl_path"):
                     command = globalVars.config.get("BOSWatch", "rtl_path")
-                command = command+"rtl_fm -d "+str(args.device)+" -f "+str(freqConverter.freqToHz(args.freq))+" -M fm -p "+str(args.error)+" -E DC -F 0 -l "+str(args.squelch)+" -g "+str(args.gain)+" -s 22050"
+                command = command+"rtl_fm -d "+str(args.device)+" -f "+str(freqConverter.freqToHz(args.freq)) + \
+                          " -M fm -p "+str(args.error)+" -E DC -F 0 -l " + \
+                          str(args.squelch)+" -g "+str(args.gain) + " -s 22050"
                 rtl_fm = subprocess.Popen(command.split(),
-                        # stdin=rtl_fm.stdout,
-                        stdout=subprocess.PIPE,
-                        stderr=open(globalVars.log_path+"rtl_fm.log", "a"),
-                        shell=False)
+                                          stdout=subprocess.PIPE,
+                                          stderr=open(globalVars.log_path+"rtl_fm.log", "a"),
+                                          shell=False)
                 # rtl_fm doesn't self-destruct, when an error occurs
                 # wait a moment to give the subprocess a chance to write the logfile
                 time.sleep(3)
@@ -324,10 +312,10 @@ def main():
                     command = globalVars.config.get("BOSWatch", "multimon_path")
                 command += "multimon-ng " + str(demodulation) + " -f alpha -t raw /dev/stdin - "
                 multimon_ng = subprocess.Popen(command.split(),
-                    stdin=rtl_fm.stdout,
-                    stdout=subprocess.PIPE,
-                    stderr=open(globalVars.log_path+"multimon.log","a"),
-                    shell=False)
+                                               stdin=rtl_fm.stdout,
+                                               stdout=subprocess.PIPE,
+                                               stderr=open(globalVars.log_path+"multimon.log", "a"),
+                                               shell=False)
                 # multimon-ng  doesn't self-destruct, when an error occurs
                 # wait a moment to give the subprocess a chance to write the logfile
                 time.sleep(3)
@@ -353,16 +341,16 @@ def main():
                 # write multimon-ng raw data
                 if globalVars.config.getboolean("BOSWatch", "writeMultimonRaw"):
                     try:
-                        rawMmOut = open(globalVars.log_path+"mm_raw.txt", "a")
-                        rawMmOut.write(decoded)
+                        raw_mm_out = open(globalVars.log_path+"mm_raw.txt", "a")
+                        raw_mm_out.write(decoded)
                     except:
                         logging.warning("cannot write raw multimon data")
                     finally:
-                        rawMmOut.close()
+                        raw_mm_out.close()
         else:
             logging.debug("start testing")
-            testFile = open(globalVars.script_path+"/citest/testdata.txt", "r")
-            for testData in testFile:
+            test_file = open(globalVars.script_path+"/citest/testdata.txt", "r")
+            for testData in test_file:
                 if (len(testData.rstrip(' \t\n\r')) > 1) and ("#" not in testData[0]):
                     logging.info("Testdata: %s", testData.rstrip(' \t\n\r'))
                     from includes import decoder
