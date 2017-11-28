@@ -307,17 +307,13 @@ def main():
         #
         if not args.test:
             logging.debug("starting multimon-ng")
-            command = globalVars.config.get("BOSWatch", "multimon_path")
-            command += "multimon-ng " + str(demodulation) + " -f alpha -t raw /dev/stdin - "
+            command = os.path.join(globalVars.config.get("BOSWatch", "multimon_path"), "multimon-ng")
+            command += " " + str(demodulation) + " -f alpha -t raw /dev/stdin - "
             multimon_ng = subprocess.Popen(command.split(),
                                            stdin=rtl_fm.stdout,
                                            stdout=subprocess.PIPE,
-                                           stderr=open(globalVars.log_path+"multimon.log", "a"),
+                                           stderr=open(globalVars.log_path + "multimon.log", "a"),
                                            shell=False)
-            # multimon-ng  doesn't self-destruct, when an error occurs
-            # wait a moment to give the subprocess a chance to write the logfile
-            time.sleep(3)
-            checkSubprocesses.checkMultimon()
         else:
             logging.warning("!!! Test-Mode: multimon-ng not started !!!")
 
