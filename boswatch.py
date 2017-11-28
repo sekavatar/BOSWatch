@@ -305,29 +305,23 @@ def main():
         #
         # Start multimon
         #
-        if multimon_ng is not None:
-            if not args.test:
-                logging.debug("starting multimon-ng")
-                command = ""
-                if globalVars.config.has_option("BOSWatch", "multimon_path"):
-                    command = globalVars.config.get("BOSWatch", "multimon_path")
-                command += "multimon-ng " + str(demodulation) + " -f alpha -t raw /dev/stdin - "
-                multimon_ng = subprocess.Popen(command.split(),
-                                               stdin=rtl_fm.stdout,
-                                               stdout=subprocess.PIPE,
-                                               stderr=open(globalVars.log_path+"multimon.log", "a"),
-                                               shell=False)
-                # multimon-ng  doesn't self-destruct, when an error occurs
-                # wait a moment to give the subprocess a chance to write the logfile
-                time.sleep(3)
-                checkSubprocesses.checkMultimon()
-            else:
-                logging.warning("!!! Test-Mode: multimon-ng not started !!!")
+        if not args.test:
+            logging.debug("starting multimon-ng")
+            command = ""
+            if globalVars.config.has_option("BOSWatch", "multimon_path"):
+                command = globalVars.config.get("BOSWatch", "multimon_path")
+            command += "multimon-ng " + str(demodulation) + " -f alpha -t raw /dev/stdin - "
+            multimon_ng = subprocess.Popen(command.split(),
+                                           stdin=rtl_fm.stdout,
+                                           stdout=subprocess.PIPE,
+                                           stderr=open(globalVars.log_path+"multimon.log", "a"),
+                                           shell=False)
+            # multimon-ng  doesn't self-destruct, when an error occurs
+            # wait a moment to give the subprocess a chance to write the logfile
+            time.sleep(3)
+            checkSubprocesses.checkMultimon()
         else:
-            # we couldn't work without multimon-ng -> exit
-            logging.critical("cannot start multimon-ng")
-            logging.debug("cannot start multimon-ng", exc_info=True)
-            exit(1)
+            logging.warning("!!! Test-Mode: multimon-ng not started !!!")
 
         #
         # Get decoded data from multimon-ng and call BOSWatch-decoder
