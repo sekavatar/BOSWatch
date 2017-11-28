@@ -100,6 +100,24 @@ def check_dependencies():
     return "something", None, None
 
 
+def start_rtl_fm(exe_path, device, freq, error_freq, squelch, gain):
+    logging.debug("starting rtl_fm")
+    command = "rtl_fm"
+    command = os.path.join(exe_path, command)
+    command += " -d " + str(device) + " -f " + str(freqConverter.freqToHz(freq)) + \
+               " -M fm -p " + str(error_freq) + " -E DC -F 0 -l " + \
+               str(squelch) + " -g " + str(gain) + " -s 22050"
+    rtl_fm = subprocess.Popen(shlex.split(command),
+                              stdout=subprocess.PIPE,
+                              stderr=open(globalVars.log_path + "rtl_fm.log", "a"),
+                              shell=False)
+    # rtl_fm doesn't self-destruct, when an error occurs
+    # wait a moment to give the subprocess a chance to write the logfile
+    # TODO: I assume we are checking for errors here?
+    time.sleep(3)
+    checkSubprocesses.checkRTL()
+
+
 def parse_config(config_file_path):
     #
     # Read config.ini
@@ -182,6 +200,8 @@ def main():
 
     init_logging(args)
     try:
+        # We need to check if these are installed
+        # rtl_fm is considered to be critical
         rtl_fm, multimon_ng, nma_handler = check_dependencies()
 
         demodulation = ""
@@ -277,31 +297,10 @@ def main():
         #
         # Start rtl_fm
         #
-        if rtl_fm is not None:
-            if not args.test:
-                logging.debug("starting rtl_fm")
-                command = "rtl_fm"
-                if config.has_option("BOSWatch", "rtl_path"):
-                    command = os.path.join(config.get("BOSWatch", "rtl_path"), command)
-                command += " -d " + str(args.device) + " -f " + str(freqConverter.freqToHz(args.freq)) + \
-                          " -M fm -p "+str(args.error)+" -E DC -F 0 -l " + \
-                          str(args.squelch) + " -g " + str(args.gain) + " -s 22050"
-                rtl_fm = subprocess.Popen(shlex.split(command),
-                                          stdout=subprocess.PIPE,
-                                          stderr=open(globalVars.log_path + "rtl_fm.log", "a"),
-                                          shell=False)
-                # rtl_fm doesn't self-destruct, when an error occurs
-                # wait a moment to give the subprocess a chance to write the logfile
-                # TODO: I assume we are checking for errors here?
-                time.sleep(3)
-                checkSubprocesses.checkRTL()
-            else:
-                logging.warning("!!! Test-Mode: rtl_fm not started !!!")
+        if not args.test:
+            start_rtl_fm(config.get("BOSWatch", "rtl_path"), args.device, args.freq, args.error, args.squelch, args.gain)
         else:
-            # we couldn't work without rtl_fm -> exit
-            logging.critical("cannot start rtl_fm")
-            logging.debug("cannot start rtl_fm", exc_info=True)
-            raise EnvironmentError("rtl_fm could not be started")
+            logging.warning("!!! Test-Mode: rtl_fm not started !!!")
 
         #
         # Start multimon
