@@ -100,22 +100,21 @@ def check_dependencies():
     return "something", None, None
 
 
-def start_rtl_fm(exe_path, device, freq, error_freq, squelch, gain):
+def start_rtl_fm(executable, device, freq, error_freq, squelch, gain):
     logging.debug("starting rtl_fm")
-    command = "rtl_fm"
-    command = os.path.join(exe_path, command)
-    command += " -d " + str(device) + " -f " + str(freqConverter.freqToHz(freq)) + \
-               " -M fm -p " + str(error_freq) + " -E DC -F 0 -l " + \
-               str(squelch) + " -g " + str(gain) + " -s 22050"
-    rtl_fm = subprocess.Popen(shlex.split(command),
-                              stdout=subprocess.PIPE,
-                              stderr=open(globalVars.log_path + "rtl_fm.log", "a"),
-                              shell=False)
+    command = executable + " -d " + str(device) + " -f " + str(freqConverter.freqToHz(freq)) + \
+              " -M fm -p " + str(error_freq) + " -E DC -F 0 -l " + \
+              str(squelch) + " -g " + str(gain) + " -s 22050"
+    return(subprocess.Popen(shlex.split(command),
+                            stdout=subprocess.PIPE,
+                            stderr=open(globalVars.log_path + "rtl_fm.log", "a"),
+                            shell=False))
     # rtl_fm doesn't self-destruct, when an error occurs
     # wait a moment to give the subprocess a chance to write the logfile
     # TODO: I assume we are checking for errors here?
-    time.sleep(3)
-    checkSubprocesses.checkRTL()
+    # TODO: removing this for now, it'll only check to see if rtl_fm won't quit with an error
+    # time.sleep(3)
+    # checkSubprocesses.checkRTL()
 
 
 def parse_config(config_file_path):
@@ -298,7 +297,8 @@ def main():
         # Start rtl_fm
         #
         if not args.test:
-            start_rtl_fm(config.get("BOSWatch", "rtl_path"), args.device, args.freq, args.error, args.squelch, args.gain)
+            start_rtl_fm(os.path.join(config.get("BOSWatch", "rtl_path"), "rtl_fm"),
+                         args.device, args.freq, args.error, args.squelch, args.gain)
         else:
             logging.warning("!!! Test-Mode: rtl_fm not started !!!")
 
