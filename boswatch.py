@@ -307,9 +307,7 @@ def main():
         #
         if not args.test:
             logging.debug("starting multimon-ng")
-            command = ""
-            if globalVars.config.has_option("BOSWatch", "multimon_path"):
-                command = globalVars.config.get("BOSWatch", "multimon_path")
+            command = globalVars.config.get("BOSWatch", "multimon_path")
             command += "multimon-ng " + str(demodulation) + " -f alpha -t raw /dev/stdin - "
             multimon_ng = subprocess.Popen(command.split(),
                                            stdin=rtl_fm.stdout,
