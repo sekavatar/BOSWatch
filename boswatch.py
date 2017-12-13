@@ -117,6 +117,16 @@ def start_rtl_fm(executable, device, freq, error_freq, squelch, gain):
     # checkSubprocesses.checkRTL()
 
 
+def start_multimon_ng(executable, rtl_fm_handle, demodulation):
+    logging.debug("starting multimon-ng")
+    command = executable + " " + str(demodulation) + " -f alpha -t raw /dev/stdin - "
+    return subprocess.Popen(command.split(),
+                            stdin=rtl_fm_handle.stdout,
+                            stdout=subprocess.PIPE,
+                            stderr=open(globalVars.log_path + "multimon.log", "a"),
+                            shell=False)
+
+
 def parse_config(config_file_path):
     #
     # Read config.ini
@@ -198,59 +208,58 @@ def main():
     config = parse_config(os.path.join(globalVars.script_path, "config", "config.ini"))
 
     init_logging(args)
-    try:
-        # We need to check if these are installed
-        # rtl_fm is considered to be critical
-        rtl_fm, multimon_ng, nma_handler = check_dependencies()
 
-        demodulation = ""
-        if "FMS" in args.demod:
-            demodulation += "-a FMSFSK "
-            logging.debug(" - Demod: FMS")
-        if "ZVEI" in args.demod:
-            demodulation += "-a ZVEI1 "
-            logging.debug(" - Demod: ZVEI")
-        if "POC512" in args.demod:
-            demodulation += "-a POCSAG512 "
-            logging.debug(" - Demod: POC512")
-        if "POC1200" in args.demod:
-            demodulation += "-a POCSAG1200 "
-            logging.debug(" - Demod: POC1200")
-        if "POC2400" in args.demod:
-            demodulation += "-a POCSAG2400 "
-            logging.debug(" - Demod: POC2400")
+    # We need to check if these are installed
+    # rtl_fm is considered to be critical
+    rtl_fm, multimon_ng, nma_handler = check_dependencies()
 
-        logging.debug(" - Use /var/log: %s", args.usevarlog)
-        logging.debug(" - Verbose Mode: %s", args.verbose)
-        logging.debug(" - Quiet Mode: %s", args.quiet)
+    demodulation = ""
+    if "FMS" in args.demod:
+        demodulation += "-a FMSFSK "
+        logging.debug(" - Demod: FMS")
+    if "ZVEI" in args.demod:
+        demodulation += "-a ZVEI1 "
+        logging.debug(" - Demod: ZVEI")
+    if "POC512" in args.demod:
+        demodulation += "-a POCSAG512 "
+        logging.debug(" - Demod: POC512")
+    if "POC1200" in args.demod:
+        demodulation += "-a POCSAG1200 "
+        logging.debug(" - Demod: POC1200")
+    if "POC2400" in args.demod:
+        demodulation += "-a POCSAG2400 "
+        logging.debug(" - Demod: POC2400")
 
-        if not args.quiet:  # only if not quiet mode
-            from includes import shellHeader
-            shellHeader.printHeader(args)
+    logging.debug(" - Use /var/log: %s", args.usevarlog)
+    logging.debug(" - Verbose Mode: %s", args.verbose)
+    logging.debug(" - Quiet Mode: %s", args.quiet)
 
-        if args.test:
-            logging.warning("!!! We are in Test-Mode !!!")
+    if not args.quiet:  # only if not quiet mode
+        from includes import shellHeader
+        shellHeader.printHeader(args)
 
-        #
-        # Add NMA logging handler
-        #
-        if nma_handler is not None:
-            if config.getboolean("NMAHandler", "enableHandler"):
-                # We do need some API key
-                if len(config.get("NMAHandler", "APIKey")) > 0:
-                    logging.debug("adding NMA logging handler")
-                    from includes import NMAHandler  # TODO: Install nmapy as python module
-                    if config.get("NMAHandler", "appName") == "":
-                        nma_handler = NMAHandler.NMAHandler(config.get("NMAHandler", "APIKey"))
-                    else:
-                        nma_handler = NMAHandler.NMAHandler(config.get("NMAHandler", "APIKey"),
-                                                            config.get("NMAHandler", "appName"))
-                    nma_handler.setLevel(config.getint("NMAHandler", "loglevel"))
-                    logging.getLogger().addHandler(nma_handler)
-        else:
-            # It's an error, but we can work without that stuff...
-            logging.error("cannot add NMA logging handler")
-            logging.debug("cannot add NMA logging handler", exc_info=True)
+    if args.test:
+        logging.warning("!!! We are in Test-Mode !!!")
+    #
+    # Add NMA logging handler
+    #
+    if nma_handler is not None:
+        if config.getboolean("NMAHandler", "enableHandler"):
+            # We do need some API key
+            if len(config.get("NMAHandler", "APIKey")) > 0:
+                logging.debug("adding NMA logging handler")
+                from includes import NMAHandler  # TODO: Install nmapy as python module
+                if config.get("NMAHandler", "appName") == "":
+                    nma_handler = NMAHandler.NMAHandler(config.get("NMAHandler", "APIKey"))
+                else:
+                    nma_handler = NMAHandler.NMAHandler(config.get("NMAHandler", "APIKey"),
+                                                        config.get("NMAHandler", "appName"))
+                nma_handler.setLevel(config.getint("NMAHandler", "loglevel"))
+                logging.getLogger().addHandler(nma_handler)
+    else:
+        # It's an error, but we can work without that stuff...
+        logging.error("cannot add NMA logging handler")
+        logging.debug("cannot add NMA logging handler", exc_info=True)
 
         # initialization was fine, continue with main program...
 
@@ -293,58 +302,53 @@ def main():
         #    logging.error("cannot load description lists")
         #    logging.debug("cannot load description lists", exc_info=True)
 
-        #
-        # Start rtl_fm
-        #
-        if not args.test:
-            start_rtl_fm(os.path.join(config.get("BOSWatch", "rtl_path"), "rtl_fm"),
-                         args.device, args.freq, args.error, args.squelch, args.gain)
-        else:
-            logging.warning("!!! Test-Mode: rtl_fm not started !!!")
+    #
+    # Start rtl_fm
+    #
+    if not args.test:
+        rtl_fm = start_rtl_fm(os.path.join(config.get("BOSWatch", "rtl_path"), "rtl_fm"),
+                     args.device, args.freq, args.error, args.squelch, args.gain)
+    else:
+        logging.warning("!!! Test-Mode: rtl_fm not started !!!")
 
-        #
-        # Start multimon
-        #
-        if not args.test:
-            logging.debug("starting multimon-ng")
-            command = os.path.join(globalVars.config.get("BOSWatch", "multimon_path"), "multimon-ng")
-            command += " " + str(demodulation) + " -f alpha -t raw /dev/stdin - "
-            multimon_ng = subprocess.Popen(command.split(),
-                                           stdin=rtl_fm.stdout,
-                                           stdout=subprocess.PIPE,
-                                           stderr=open(globalVars.log_path + "multimon.log", "a"),
-                                           shell=False)
-        else:
-            logging.warning("!!! Test-Mode: multimon-ng not started !!!")
+    #
+    # Start multimon
+    #
+    if not args.test:
+        multimon_ng = start_multimon_ng(os.path.join(config.get("BOSWatch", "multimon_path"), "multimon-ng"), rtl_fm, demodulation)
+    else:
+        logging.warning("!!! Test-Mode: rtl_fm not started !!!")
 
-        #
-        # Get decoded data from multimon-ng and call BOSWatch-decoder
-        #
-        if not args.test:
-            logging.debug("start decoding")
-            while True:
-                decoded = str(multimon_ng.stdout.readline())  # Get line data from multimon stdout
+    if args.test:
+        logging.debug("start testing")
+        test_file = open(os.path.join(globalVars.script_path, "citest/testdata.txt"), "r")
+        for testData in test_file:
+            if (len(testData.rstrip(' \t\n\r')) > 1) and ("#" not in testData[0]):
+                logging.info("Testdata: %s", testData.rstrip(' \t\n\r'))
                 from includes import decoder
-                decoder.decode(freqConverter.freqToHz(args.freq), decoded)
+                decoder.decode(freqConverter.freqToHz(args.freq), testData)
+        logging.debug("test finished")
+        return 0
 
-                # write multimon-ng raw data
-                if globalVars.config.getboolean("BOSWatch", "writeMultimonRaw"):
-                    try:
-                        raw_mm_out = open(globalVars.log_path+"mm_raw.txt", "a")
-                        raw_mm_out.write(decoded)
-                    except:
-                        logging.warning("cannot write raw multimon data")
-                    finally:
-                        raw_mm_out.close()
-        else:
-            logging.debug("start testing")
-            test_file = open(globalVars.script_path+"/citest/testdata.txt", "r")
-            for testData in test_file:
-                if (len(testData.rstrip(' \t\n\r')) > 1) and ("#" not in testData[0]):
-                    logging.info("Testdata: %s", testData.rstrip(' \t\n\r'))
-                    from includes import decoder
-                    decoder.decode(freqConverter.freqToHz(args.freq), testData)
-            logging.debug("test finished")
+    #
+    # Get decoded data from multimon-ng and call BOSWatch-decoder
+    #
+    try:
+        logging.debug("start decoding")
+        while True:
+            decoded = str(multimon_ng.stdout.readline())  # Get line data from multimon stdout
+            from includes import decoder
+            decoder.decode(freqConverter.freqToHz(args.freq), decoded)
+
+            # write multimon-ng raw data
+            if config.getboolean("BOSWatch", "writeMultimonRaw"):
+                try:
+                    raw_mm_out = open(globalVars.log_path+"mm_raw.txt", "a")
+                    raw_mm_out.write(decoded)
+                except:
+                    logging.warning("cannot write raw multimon data")
+                finally:
+                    raw_mm_out.close()
 
     except KeyboardInterrupt:
         logging.warning("Keyboard Interrupt")
