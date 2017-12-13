@@ -21,7 +21,6 @@ import logging.handlers
 import bwconfig
 
 import argparse		 # for parse the args
-#import ConfigParser	 # for parse the config file
 import os			 # for log mkdir
 import sys			 # for py version
 import time			 # for time.sleep()
@@ -29,7 +28,6 @@ import subprocess	 # for starting rtl_fm and multimon-ng
 import shlex         # for command line parameter splitting
 
 from includes import globalVars  # Global variables
-from includes import checkSubprocesses  # check startup of the subprocesses
 from includes.helper import configHandler
 from includes.helper import freqConverter
 
@@ -112,6 +110,7 @@ def start_rtl_fm(executable, device, freq, error_freq, squelch, gain):
     # wait a moment to give the subprocess a chance to write the logfile
     # TODO: I assume we are checking for errors here?
     # TODO: removing this for now, it'll only check to see if rtl_fm won't quit with an error
+    # TODO: if ("exiting" in rtlLog) or  ("Failed to open" in rtlLog): Append fail log to debug output
     # time.sleep(3)
     # checkSubprocesses.checkRTL()
 
@@ -119,6 +118,7 @@ def start_rtl_fm(executable, device, freq, error_freq, squelch, gain):
 def start_multimon_ng(executable, rtl_fm_handle, demodulation):
     logging.debug("starting multimon-ng")
     command = executable + " " + str(demodulation) + " -f alpha -t raw /dev/stdin - "
+    # TODO: if ("invalid" in multimonLog) or ("error" in multimonLog): append fail to debuglog
     return subprocess.Popen(command.split(),
                             stdin=rtl_fm_handle.stdout,
                             stdout=subprocess.PIPE,
@@ -181,7 +181,6 @@ def main():
     if not os.path.exists(globalVars.log_path):
         os.mkdir(globalVars.log_path)
 
-    # cfg = parse_config(os.path.join(globalVars.script_path, "config", "config.ini"))
     cfg = bwconfig.get_config()
 
     init_logging(args)
