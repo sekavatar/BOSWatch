@@ -12,6 +12,7 @@ Handler for the filter and plugins at an alarm
 
 import logging # Global logger
 import time    # timestamp
+import bwconfig
 
 from includes import globalVars  # Global variables
 
@@ -36,7 +37,7 @@ def processAlarmHandler(typ, freq, data):
 	@return:    nothing
 	@exception: Exception if starting a Thread failed
 	"""
-	if globalVars.config.getboolean("BOSWatch","processAlarmAsync") == True:
+	if bwconfig.get_config().getboolean("BOSWatch","processAlarmAsync") == True:
 		logging.debug("starting processAlarm async")
 		try:
 			from threading import Thread
@@ -75,7 +76,7 @@ def processAlarm(typ, freq, data):
 		# Go to all plugins in pluginList
 		for pluginName, plugin in globalVars.pluginList.items():
 			# if enabled use RegEx-filter
-			if globalVars.config.getint("BOSWatch","useRegExFilter"):
+			if bwconfig.get_config().getint("BOSWatch","useRegExFilter"):
 				from includes import regexFilter
 				if regexFilter.checkFilters(typ, data, pluginName, freq):
 					logging.debug("call Plugin: %s", pluginName)

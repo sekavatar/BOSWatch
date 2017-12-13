@@ -11,6 +11,7 @@ ZVEI Decoder
 
 import logging # Global logger
 import re      # Regex for validation
+import bwconfig
 
 from includes import globalVars  # Global variables
 from includes import doubleFilter  # double alarm filter
@@ -65,7 +66,7 @@ def decode(freq, decoded):
 				logging.info("5-Ton: %s", zvei_id)
 				data = {"zvei":zvei_id, "description":zvei_id}
 				# If enabled, look up description
-				if globalVars.config.getint("ZVEI", "idDescribed"):
+				if bwconfig.get_config().getint("ZVEI", "idDescribed"):
 					from includes import descriptionList
 					data["description"] = descriptionList.getDescription("ZVEI", zvei_id)
 				# processing the alarm

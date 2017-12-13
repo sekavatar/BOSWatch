@@ -13,6 +13,7 @@ and the time ignoring the id in case of a double alarm
 
 import logging # Global logger
 import time    # timestamp for doublealarm
+import bwconfig
 
 from includes import globalVars  # Global variables
 
@@ -37,10 +38,10 @@ def checkID(typ, data, msg=""):
 	for (xID, xTimestamp, xMsg) in doubleList:
 		# given ID found?
 		# return False if the first entry in double_ignore_time is found, we will not check for younger ones...
-		if data == xID and timestamp < xTimestamp + globalVars.config.getint("BOSWatch", "doubleFilter_ignore_time"):
-			logging.debug("-- previous id %s is within doubleFilter_ignore_time (%ss)", xID, globalVars.config.getint("BOSWatch", "doubleFilter_ignore_time"))
+		if data == xID and timestamp < xTimestamp + bwconfig.get_config().getint("BOSWatch", "doubleFilter_ignore_time"):
+			logging.debug("-- previous id %s is within doubleFilter_ignore_time (%ss)", xID, bwconfig.get_config().getint("BOSWatch", "doubleFilter_ignore_time"))
 			# if wanted, we have to check the msg additional
-			if "POC" in typ and globalVars.config.getint("BOSWatch", "doubleFilter_check_msg"):
+			if "POC" in typ and bwconfig.get_config().getint("BOSWatch", "doubleFilter_check_msg"):
 				logging.debug("-- compare msg:")
 				logging.debug("---- current msg: (%s)", msg.strip())
 				logging.debug("---- previous msg: (%s)", xMsg)
@@ -67,6 +68,6 @@ def newEntry(data, msg = ""):
 	logging.debug("Added %s to doubleList", data)
 
 	# now check if list has more than n entries:
-	if len(doubleList) > globalVars.config.getint("BOSWatch", "doubleFilter_ignore_entries"):
+	if len(doubleList) > bwconfig.get_config().getint("BOSWatch", "doubleFilter_ignore_entries"):
 		# we have to kill the oldest one
 		doubleList.pop(0)

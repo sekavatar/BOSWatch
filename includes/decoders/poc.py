@@ -12,6 +12,7 @@ POCSAG Decoder
 
 import logging # Global logger
 import re      # Regex for validation
+import bwconfig
 
 from includes import globalVars  # Global variables
 from includes import doubleFilter  # double alarm filter
@@ -37,27 +38,28 @@ def isAllowed(poc_id):
 
 	# 1.) If allowed RICs is set, only they will path,
 	#       If RIC is the right one return True, else False
-	if globalVars.config.get("POC", "allow_ric"):
-		if poc_id in globalVars.config.get("POC", "allow_ric"):
+	#if globalVars.config.get("POC", "allow_ric"):
+	if bwconfig.get_config().get("POC", "allow_ric"):
+		if poc_id in bwconfig.get_config().get("POC", "allow_ric"):
 			logging.info("RIC %s is allowed", poc_id)
 			return True
 		else:
 			logging.info("RIC %s is not in the allowed list", poc_id)
 			allowed = 0
 	# 2.) If denied RIC, return False
-	if poc_id in globalVars.config.get("POC", "deny_ric"):
+	if poc_id in bwconfig.get_config().get("POC", "deny_ric"):
 		logging.info("RIC %s is denied by config.ini", poc_id)
 		return False # RIC is denied - strongest way to block
 	# 3.) Check Range, return False if outside def. range
-	if globalVars.config.getint("POC", "filter_range_start") < int(poc_id) < globalVars.config.getint("POC", "filter_range_end"):
+	if bwconfig.get_config().getint("POC", "filter_range_start") < int(poc_id) < bwconfig.get_config().getint("POC", "filter_range_end"):
 		logging.info("RIC %s in between filter range", poc_id)
 		return True
 	else:
 		logging.info("RIC %s out of filter range", poc_id)
 		allowed = 0
 	# 4.) Implementation for net identifiers
-	if globalVars.config.get("POC", "netIdent_ric"):
-		if poc_id in globalVars.config.get("POC", "netIdent_ric"):
+	if bwconfig.get_config().get("POC", "netIdent_ric"):
+		if poc_id in bwconfig.get_config().get("POC", "netIdent_ric"):
 			logging.info("RIC %s as net identifier", poc_id)
 			return True
 		else:
@@ -124,7 +126,7 @@ def decode(freq, decoded):
 						# Add function as character a-d to dataset
 						data["functionChar"] = data["function"].replace("1", "a").replace("2", "b").replace("3", "c").replace("4", "d")
 						# If enabled, look up description
-						if globalVars.config.getint("POC", "idDescribed"):
+						if bwconfig.get_config().getint("POC", "idDescribed"):
 							from includes import descriptionList
 							data["description"] = descriptionList.getDescription("POC", poc_id+data["functionChar"])
 						# processing the alarm

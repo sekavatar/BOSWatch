@@ -11,6 +11,7 @@ FMS Decoder
 
 import logging # Global logger
 import re      # Regex for validation
+import bwconfig
 
 from includes import globalVars  # Global variables
 from includes import doubleFilter  # double alarm filter
@@ -47,7 +48,7 @@ def decode(freq, decoded):
 		proceed = True # no CRC-check required - proceed
 
 		# shall we use the CRC-check?
-		if (globalVars.config.getboolean("FMS", "CheckCRC")):
+		if (bwconfig.get_config().getboolean("FMS", "CheckCRC")):
 			if "CRC correct" not in decoded:
 				# if CRC must be checked and is not correct - dont proceed
 				proceed = False
@@ -61,7 +62,7 @@ def decode(freq, decoded):
 					logging.info("FMS:%s Status:%s Richtung:%s TSI:%s", fms_id[0:8], fms_status, fms_direction, fms_tsi)
 					data = {"fms":fms_id[0:8], "status":fms_status, "direction":fms_direction, "directionText":fms_directionText, "tsi":fms_tsi, "description":fms_id[0:8]}
 					# If enabled, look up description
-					if globalVars.config.getint("FMS", "idDescribed"):
+					if bwconfig.get_config().getint("FMS", "idDescribed"):
 						from includes import descriptionList
 						data["description"] = descriptionList.getDescription("FMS", fms_id[0:8])
 					# processing the alarm

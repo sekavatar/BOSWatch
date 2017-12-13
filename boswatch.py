@@ -18,8 +18,10 @@ GitHUB:		https://github.com/Schrolli91/BOSWatch
 import logging
 import logging.handlers
 
+import bwconfig
+
 import argparse		 # for parse the args
-import ConfigParser	 # for parse the config file
+#import ConfigParser	 # for parse the config file
 import os			 # for log mkdir
 import sys			 # for py version
 import time			 # for time.sleep()
@@ -86,9 +88,6 @@ def init_logging(args):
     logging.debug("Build Date:	%s", globalVars.buildDate)
     logging.debug("Python Vers:	%s", sys.version)
     logging.debug("BOSWatch given arguments")
-    if args.test:
-        logging.debug(" - Test-Mode!")
-
     logging.debug(" - Frequency: %s", freqConverter.freqToHz(args.freq))
     logging.debug(" - Device: %s", args.device)
     logging.debug(" - PPM Error: %s", args.error)
@@ -125,29 +124,6 @@ def start_multimon_ng(executable, rtl_fm_handle, demodulation):
                             stdout=subprocess.PIPE,
                             stderr=open(globalVars.log_path + "multimon.log", "a"),
                             shell=False)
-
-
-def parse_config(config_file_path):
-    #
-    # Read config.ini
-    #
-    # if not os.path.exists(os.path.dirname(os.path.abspath(__file__)) + "/config/config.ini"):
-    if not os.path.exists(config_file_path):
-        raise EnvironmentError("No configuration file found")
-
-    logging.debug("reading config file")
-    config = ConfigParser.ConfigParser()
-    try:
-        config.read(config_file_path)
-        # if given loglevel is debug:
-        # TODO: check config file integrity
-        # if globalVars.config.getint("BOSWatch", "loglevel") == 10:
-    except ConfigParser.Error as error:
-        # we cannot work without config, log and re-raise
-        logging.critical("cannot read config file %s", error)
-        logging.debug("cannot read config file", exc_info=True)
-        raise
-    return config
 
 
 #
@@ -197,7 +173,7 @@ def main():
     if args.usevarlog:
         globalVars.log_path = "/var/log/BOSWatch/"
     else:
-        globalVars.log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "log")
+        globalVars.log_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "log")
 
     #
     # If necessary create log-path
@@ -205,7 +181,8 @@ def main():
     if not os.path.exists(globalVars.log_path):
         os.mkdir(globalVars.log_path)
 
-    config = parse_config(os.path.join(globalVars.script_path, "config", "config.ini"))
+    # cfg = parse_config(os.path.join(globalVars.script_path, "config", "config.ini"))
+    cfg = bwconfig.get_config()
 
     init_logging(args)
 
@@ -238,23 +215,21 @@ def main():
         from includes import shellHeader
         shellHeader.printHeader(args)
 
-    if args.test:
-        logging.warning("!!! We are in Test-Mode !!!")
     #
     # Add NMA logging handler
     #
     if nma_handler is not None:
-        if config.getboolean("NMAHandler", "enableHandler"):
+        if cfg.getboolean("NMAHandler", "enableHandler"):
             # We do need some API key
-            if len(config.get("NMAHandler", "APIKey")) > 0:
+            if len(cfg.get("NMAHandler", "APIKey")) > 0:
                 logging.debug("adding NMA logging handler")
                 from includes import NMAHandler  # TODO: Install nmapy as python module
-                if config.get("NMAHandler", "appName") == "":
-                    nma_handler = NMAHandler.NMAHandler(config.get("NMAHandler", "APIKey"))
+                if cfg.get("NMAHandler", "appName") == "":
+                    nma_handler = NMAHandler.NMAHandler(cfg.get("NMAHandler", "APIKey"))
                 else:
-                    nma_handler = NMAHandler.NMAHandler(config.get("NMAHandler", "APIKey"),
-                                                        config.get("NMAHandler", "appName"))
-                nma_handler.setLevel(config.getint("NMAHandler", "loglevel"))
+                    nma_handler = NMAHandler.NMAHandler(cfg.get("NMAHandler", "APIKey"),
+                                                        cfg.get("NMAHandler", "appName"))
+                nma_handler.setLevel(cfg.getint("NMAHandler", "loglevel"))
                 logging.getLogger().addHandler(nma_handler)
     else:
         # It's an error, but we can work without that stuff...
@@ -306,7 +281,7 @@ def main():
     # Start rtl_fm
     #
     if not args.test:
-        rtl_fm = start_rtl_fm(os.path.join(config.get("BOSWatch", "rtl_path"), "rtl_fm"),
+        rtl_fm = start_rtl_fm(os.path.join(cfg.get("BOSWatch", "rtl_path"), "rtl_fm"),
                      args.device, args.freq, args.error, args.squelch, args.gain)
     else:
         logging.warning("!!! Test-Mode: rtl_fm not started !!!")
@@ -315,7 +290,7 @@ def main():
     # Start multimon
     #
     if not args.test:
-        multimon_ng = start_multimon_ng(os.path.join(config.get("BOSWatch", "multimon_path"), "multimon-ng"), rtl_fm, demodulation)
+        multimon_ng = start_multimon_ng(os.path.join(cfg.get("BOSWatch", "multimon_path"), "multimon-ng"), rtl_fm, demodulation)
     else:
         logging.warning("!!! Test-Mode: rtl_fm not started !!!")
 
@@ -341,7 +316,7 @@ def main():
             decoder.decode(freqConverter.freqToHz(args.freq), decoded)
 
             # write multimon-ng raw data
-            if config.getboolean("BOSWatch", "writeMultimonRaw"):
+            if cfg.getboolean("BOSWatch", "writeMultimonRaw"):
                 try:
                     raw_mm_out = open(globalVars.log_path+"mm_raw.txt", "a")
                     raw_mm_out.write(decoded)
@@ -381,7 +356,7 @@ def main():
             # Close Logging
             logging.debug("close Logging")
             # Waiting for all Threads to write there logs
-            if config.getboolean("BOSWatch", "processAlarmAsync"):
+            if cfg.getboolean("BOSWatch", "processAlarmAsync"):
                 logging.debug("waiting 3s for threads...")
                 time.sleep(3)
             logging.info("BOSWatch exit()")
