@@ -261,17 +261,18 @@ def main():
             logging.debug("cannot load filters", exc_info=True)
 
         #
-        # TODO: re-enable description list loading
         # Load description lists
         #
-        # try:
-        #    if globalVars.config.getboolean("FMS", "idDescribed") or globalVars.config.getboolean("ZVEI", "idDescribed") or globalVars.config.getboolean("POC", "idDescribed"):
-        #        from includes import descriptionList
-        #        descriptionList.loadDescriptionLists()
-        # except:
-        #    # It's an error, but we could work without that stuff...
-        #    logging.error("cannot load description lists")
-        #    logging.debug("cannot load description lists", exc_info=True)
+        try:
+            if cfg.getboolean("FMS", "idDescribed")\
+                    or cfg.getboolean("ZVEI", "idDescribed")\
+                    or cfg.getboolean("POC", "idDescribed"):
+                from includes import descriptionList
+                descriptionList.loadDescriptionLists()
+        except:
+            # It's an error, but we could work without that stuff...
+            logging.error("cannot load description lists")
+            logging.debug("cannot load description lists", exc_info=True)
 
     if args.test:
         logging.debug("start testing")
