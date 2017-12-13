@@ -239,15 +239,14 @@ def main():
         #
         # Load plugins
         #
-        # TODO: re-enable plugin loading
-        # try:
-        #    from includes import pluginLoader
-        #    pluginLoader.loadPlugins()
-        # except:
-        #    # we couldn't work without plugins -> exit
-        #    logging.critical("cannot load Plugins")
-        #    logging.debug("cannot load Plugins", exc_info=True)
-        #    exit(1)
+        try:
+            from includes import pluginLoader
+            pluginLoader.loadPlugins()
+        except:
+            # we couldn't work without plugins -> exit
+            logging.critical("cannot load Plugins")
+            logging.debug("cannot load Plugins", exc_info=True)
+            exit(1)
 
         #
         # Load filters
@@ -289,9 +288,9 @@ def main():
     #
     # Start rtl_fm
     #
-
     rtl_fm = start_rtl_fm(os.path.join(cfg.get("BOSWatch", "rtl_path"), "rtl_fm"),
                           args.device, args.freq, args.error, args.squelch, args.gain, log_path)
+
     #
     # Start multimon
     #

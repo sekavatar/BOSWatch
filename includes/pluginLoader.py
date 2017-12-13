@@ -12,6 +12,8 @@ Functions to Load and import the Plugins
 import logging # Global logger
 import imp
 import os
+import bwconfig
+import boswatch
 
 from ConfigParser import NoOptionError # we need this exception
 from includes import globalVars  # Global variables
@@ -61,7 +63,7 @@ def getPlugins():
 	"""
 	try:
 		logging.debug("Search in plugin folder")
-		PluginFolder = globalVars.script_path+"/plugins"
+		PluginFolder = os.path.join(os.path.abspath(os.path.dirname(boswatch.__file__)), "plugins")
 		plugins = []
 		# Go to all Folders in the Plugin-Dir
 		for i in os.listdir(PluginFolder):
@@ -73,7 +75,7 @@ def getPlugins():
 
 			# is the plugin enabled in the config-file?
 			try:
-				if globalVars.config.getint("Plugins", i):
+				if bwconfig.get_config().getint("Plugins", i):
 					info = imp.find_module(i, [location])
 					plugins.append({"name": i, "info": info})
 					logging.debug("Plugin [ENABLED ] %s", i)
