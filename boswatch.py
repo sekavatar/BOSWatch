@@ -251,15 +251,14 @@ def main():
         #
         # Load filters
         #
-        # TODO: re-enable filter loading
-        # try:
-        #    if globalVars.config.getboolean("BOSWatch", "useRegExFilter"):
-        #        from includes import regexFilter
-        #        regexFilter.loadFilters()
-        # except:
-        #    # It's an error, but we could work without that stuff...
-        #    logging.error("cannot load filters")
-        #    logging.debug("cannot load filters", exc_info=True)
+        try:
+            if cfg.getboolean("BOSWatch", "useRegExFilter"):
+                from includes import regexFilter
+                regexFilter.loadFilters()
+        except:
+            # It's an error, but we could work without that stuff...
+            logging.error("cannot load filters")
+            logging.debug("cannot load filters", exc_info=True)
 
         #
         # TODO: re-enable description list loading
