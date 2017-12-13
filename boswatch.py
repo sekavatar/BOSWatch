@@ -32,7 +32,7 @@ from includes.helper import configHandler
 from includes.helper import freqConverter
 
 
-def init_logging(args):
+def init_logging(args, log_path):
     #
     # Create new bw_logger...
     #
@@ -43,7 +43,7 @@ def init_logging(args):
     formatter = logging.Formatter('%(asctime)s - %(module)-15s [%(levelname)-8s] %(message)s', '%d.%m.%Y %H:%M:%S')
     # create a file logger
     # TODO: read backupCount from config file, so that we can remove additional class
-    fh = logging.handlers.TimedRotatingFileHandler(os.path.join(globalVars.log_path, "boswatch.log"), "midnight",
+    fh = logging.handlers.TimedRotatingFileHandler(os.path.join(log_path, "boswatch.log"), "midnight",
                                                    interval=1, backupCount=9)
     # Starts with log level >= Debug
     # will be changed with config.ini-param later
@@ -68,9 +68,9 @@ def init_logging(args):
     try:
         # Clear the log files
         fh.doRollover()
-        open(os.path.join(globalVars.log_path, "rtl_fm.log"), "w").close()
-        open(os.path.join(globalVars.log_path, "multimon.log"), "w").close()
-        open(os.path.join(globalVars.log_path, "mm_raw.txt"), "w").close()
+        open(os.path.join(log_path, "rtl_fm.log"), "w").close()
+        open(os.path.join(log_path, "multimon.log"), "w").close()
+        open(os.path.join(log_path, "mm_raw.txt"), "w").close()
         logging.debug("BOSWatch has started")
         logging.debug("Log files cleared")
 
@@ -97,14 +97,14 @@ def check_dependencies():
     return "something", None, None
 
 
-def start_rtl_fm(executable, device, freq, error_freq, squelch, gain):
+def start_rtl_fm(executable, device, freq, error_freq, squelch, gain, log_path):
     logging.debug("starting rtl_fm")
     command = executable + " -d " + str(device) + " -f " + str(freqConverter.freqToHz(freq)) + \
               " -M fm -p " + str(error_freq) + " -E DC -F 0 -l " + \
               str(squelch) + " -g " + str(gain) + " -s 22050"
     return(subprocess.Popen(shlex.split(command),
                             stdout=subprocess.PIPE,
-                            stderr=open(globalVars.log_path + "rtl_fm.log", "a"),
+                            stderr=open(os.path.join(log_path, "rtl_fm.log"), "a"),
                             shell=False))
     # rtl_fm doesn't self-destruct, when an error occurs
     # wait a moment to give the subprocess a chance to write the logfile
@@ -115,14 +115,14 @@ def start_rtl_fm(executable, device, freq, error_freq, squelch, gain):
     # checkSubprocesses.checkRTL()
 
 
-def start_multimon_ng(executable, rtl_fm_handle, demodulation):
+def start_multimon_ng(executable, rtl_fm_handle, demodulation, log_path):
     logging.debug("starting multimon-ng")
     command = executable + " " + str(demodulation) + " -f alpha -t raw /dev/stdin - "
     # TODO: if ("invalid" in multimonLog) or ("error" in multimonLog): append fail to debuglog
     return subprocess.Popen(command.split(),
                             stdin=rtl_fm_handle.stdout,
                             stdout=subprocess.PIPE,
-                            stderr=open(globalVars.log_path + "multimon.log", "a"),
+                            stderr=open(os.path.join(log_path, "multimon.log"), "a"),
                             shell=False)
 
 
@@ -160,6 +160,7 @@ def main():
     rtl_fm = None
     multimon_ng = None
     nma_handler = None
+    log_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "log")
     args = get_arguments()
 
     #
@@ -171,19 +172,17 @@ def main():
     # Set log_path
     #
     if args.usevarlog:
-        globalVars.log_path = "/var/log/BOSWatch/"
-    else:
-        globalVars.log_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "log")
+        log_path = "/var/log/BOSWatch/"
 
     #
     # If necessary create log-path
     #
-    if not os.path.exists(globalVars.log_path):
-        os.mkdir(globalVars.log_path)
+    if not os.path.exists(log_path):
+        os.mkdir(log_path)
 
     cfg = bwconfig.get_config()
 
-    init_logging(args)
+    init_logging(args, log_path)
 
     # We need to check if these are installed
     # rtl_fm is considered to be critical
@@ -281,7 +280,7 @@ def main():
     #
     if not args.test:
         rtl_fm = start_rtl_fm(os.path.join(cfg.get("BOSWatch", "rtl_path"), "rtl_fm"),
-                     args.device, args.freq, args.error, args.squelch, args.gain)
+                     args.device, args.freq, args.error, args.squelch, args.gain, log_path)
     else:
         logging.warning("!!! Test-Mode: rtl_fm not started !!!")
 
@@ -289,7 +288,8 @@ def main():
     # Start multimon
     #
     if not args.test:
-        multimon_ng = start_multimon_ng(os.path.join(cfg.get("BOSWatch", "multimon_path"), "multimon-ng"), rtl_fm, demodulation)
+        multimon_ng = start_multimon_ng(os.path.join(cfg.get("BOSWatch", "multimon_path"), "multimon-ng"), rtl_fm,
+                                        demodulation, log_path)
     else:
         logging.warning("!!! Test-Mode: rtl_fm not started !!!")
 
@@ -317,7 +317,7 @@ def main():
             # write multimon-ng raw data
             if cfg.getboolean("BOSWatch", "writeMultimonRaw"):
                 try:
-                    raw_mm_out = open(globalVars.log_path+"mm_raw.txt", "a")
+                    raw_mm_out = open(os.path.join(log_path, "mm_raw.txt"), "a")
                     raw_mm_out.write(decoded)
                 except:
                     logging.warning("cannot write raw multimon data")
