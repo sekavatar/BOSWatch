@@ -1,4 +1,5 @@
 import os
+import logging
 import ConfigParser
 
 
@@ -7,7 +8,7 @@ def get_config():
     if not os.path.exists(config_file_path):
         raise EnvironmentError("No configuration file found")
 
-    #logging.debug("reading config file")
+    logging.debug("reading config file")
     config = ConfigParser.ConfigParser()
     try:
         config.read(config_file_path)

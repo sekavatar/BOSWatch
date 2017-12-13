@@ -93,10 +93,6 @@ def init_logging(args, log_path):
     logging.debug(" - Gain: %s", args.gain)
 
 
-def check_dependencies():
-    return "something", None, None
-
-
 def start_rtl_fm(executable, device, freq, error_freq, squelch, gain, log_path):
     logging.debug("starting rtl_fm")
     command = executable + " -d " + str(device) + " -f " + str(freqConverter.freqToHz(freq)) + \
@@ -127,8 +123,7 @@ def start_multimon_ng(executable, rtl_fm_handle, demodulation, log_path):
 
 
 #
-# ArgParser
-# Have to be before main program
+# Parse argv
 #
 def get_arguments():
     # With -h or --help you get the Args help
@@ -157,9 +152,7 @@ def get_arguments():
 # Main program
 #
 def main():
-    rtl_fm = None
-    multimon_ng = None
-    nma_handler = None
+
     log_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "log")
     args = get_arguments()
 
@@ -183,10 +176,6 @@ def main():
     cfg = bwconfig.get_config()
 
     init_logging(args, log_path)
-
-    # We need to check if these are installed
-    # rtl_fm is considered to be critical
-    rtl_fm, multimon_ng, nma_handler = check_dependencies()
 
     demodulation = ""
     if "FMS" in args.demod:
@@ -216,63 +205,56 @@ def main():
     #
     # Add NMA logging handler
     #
-    if nma_handler is not None:
-        if cfg.getboolean("NMAHandler", "enableHandler"):
-            # We do need some API key
-            if len(cfg.get("NMAHandler", "APIKey")) > 0:
-                logging.debug("adding NMA logging handler")
-                from includes import NMAHandler  # TODO: Install nmapy as python module
-                if cfg.get("NMAHandler", "appName") == "":
-                    nma_handler = NMAHandler.NMAHandler(cfg.get("NMAHandler", "APIKey"))
-                else:
-                    nma_handler = NMAHandler.NMAHandler(cfg.get("NMAHandler", "APIKey"),
-                                                        cfg.get("NMAHandler", "appName"))
-                nma_handler.setLevel(cfg.getint("NMAHandler", "loglevel"))
-                logging.getLogger().addHandler(nma_handler)
-    else:
-        # It's an error, but we can work without that stuff...
-        logging.error("cannot add NMA logging handler")
-        logging.debug("cannot add NMA logging handler", exc_info=True)
+    if cfg.getboolean("NMAHandler", "enableHandler"):
+        # We do need some API key
+        if len(cfg.get("NMAHandler", "APIKey")) > 0:
+            logging.debug("adding NMA logging handler")
+            from includes import NMAHandler  # TODO: Check if we can fullfill dependency
+            if cfg.get("NMAHandler", "appName") == "":
+                nma_handler = NMAHandler.NMAHandler(cfg.get("NMAHandler", "APIKey"))
+            else:
+                nma_handler = NMAHandler.NMAHandler(cfg.get("NMAHandler", "APIKey"),
+                                                    cfg.get("NMAHandler", "appName"))
+            nma_handler.setLevel(cfg.getint("NMAHandler", "loglevel"))
+            logging.getLogger().addHandler(nma_handler)
 
-        # initialization was fine, continue with main program...
+    #
+    # Load plugins
+    #
+    try:
+        from includes import pluginLoader
+        pluginLoader.loadPlugins()
+    except:
+        # we couldn't work without plugins -> exit
+        logging.critical("cannot load Plugins")
+        logging.debug("cannot load Plugins", exc_info=True)
+        exit(1)
 
-        #
-        # Load plugins
-        #
-        try:
-            from includes import pluginLoader
-            pluginLoader.loadPlugins()
-        except:
-            # we couldn't work without plugins -> exit
-            logging.critical("cannot load Plugins")
-            logging.debug("cannot load Plugins", exc_info=True)
-            exit(1)
+    #
+    # Load filters
+    #
+    try:
+        if cfg.getboolean("BOSWatch", "useRegExFilter"):
+            from includes import regexFilter
+            regexFilter.loadFilters()
+    except:
+        # It's an error, but we could work without that stuff...
+        logging.error("cannot load filters")
+        logging.debug("cannot load filters", exc_info=True)
 
-        #
-        # Load filters
-        #
-        try:
-            if cfg.getboolean("BOSWatch", "useRegExFilter"):
-                from includes import regexFilter
-                regexFilter.loadFilters()
-        except:
-            # It's an error, but we could work without that stuff...
-            logging.error("cannot load filters")
-            logging.debug("cannot load filters", exc_info=True)
-
-        #
-        # Load description lists
-        #
-        try:
-            if cfg.getboolean("FMS", "idDescribed")\
-                    or cfg.getboolean("ZVEI", "idDescribed")\
-                    or cfg.getboolean("POC", "idDescribed"):
-                from includes import descriptionList
-                descriptionList.loadDescriptionLists()
-        except:
-            # It's an error, but we could work without that stuff...
-            logging.error("cannot load description lists")
-            logging.debug("cannot load description lists", exc_info=True)
+    #
+    # Load description lists
+    #
+    try:
+        if cfg.getboolean("FMS", "idDescribed")\
+                or cfg.getboolean("ZVEI", "idDescribed")\
+                or cfg.getboolean("POC", "idDescribed"):
+            from includes import descriptionList
+            descriptionList.loadDescriptionLists()
+    except:
+        # It's an error, but we could work without that stuff...
+        logging.error("cannot load description lists")
+        logging.debug("cannot load description lists", exc_info=True)
 
     if args.test:
         logging.debug("start testing")
