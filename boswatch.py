@@ -275,24 +275,6 @@ def main():
         #    logging.error("cannot load description lists")
         #    logging.debug("cannot load description lists", exc_info=True)
 
-    #
-    # Start rtl_fm
-    #
-    if not args.test:
-        rtl_fm = start_rtl_fm(os.path.join(cfg.get("BOSWatch", "rtl_path"), "rtl_fm"),
-                     args.device, args.freq, args.error, args.squelch, args.gain, log_path)
-    else:
-        logging.warning("!!! Test-Mode: rtl_fm not started !!!")
-
-    #
-    # Start multimon
-    #
-    if not args.test:
-        multimon_ng = start_multimon_ng(os.path.join(cfg.get("BOSWatch", "multimon_path"), "multimon-ng"), rtl_fm,
-                                        demodulation, log_path)
-    else:
-        logging.warning("!!! Test-Mode: rtl_fm not started !!!")
-
     if args.test:
         logging.debug("start testing")
         test_file = open(os.path.join(globalVars.script_path, "citest/testdata.txt"), "r")
@@ -303,6 +285,18 @@ def main():
                 decoder.decode(freqConverter.freqToHz(args.freq), testData)
         logging.debug("test finished")
         return 0
+
+    #
+    # Start rtl_fm
+    #
+
+    rtl_fm = start_rtl_fm(os.path.join(cfg.get("BOSWatch", "rtl_path"), "rtl_fm"),
+                          args.device, args.freq, args.error, args.squelch, args.gain, log_path)
+    #
+    # Start multimon
+    #
+    multimon_ng = start_multimon_ng(os.path.join(cfg.get("BOSWatch", "multimon_path"), "multimon-ng"), rtl_fm,
+                                    demodulation, log_path)
 
     #
     # Get decoded data from multimon-ng and call BOSWatch-decoder
